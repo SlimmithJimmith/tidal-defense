@@ -1,5 +1,7 @@
 package io.github.SlimmithJimmith.TidalDefense.lwjgl3;
 
+// Check out my comment - brendan
+
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import io.github.SlimmithJimmith.TidalDefense.Core;
