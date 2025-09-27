@@ -15,7 +15,7 @@ public class Lifeguard {
     //Lifeguard image
     public Lifeguard(Texture img){
         sprite = new Sprite(img);
-        position = new Vector2(Gdx.graphics.getWidth()/2,sprite.getScaleY()*sprite.getHeight()/2);
+        position = new Vector2((float) Gdx.graphics.getWidth() /2,sprite.getScaleY()*sprite.getHeight()/2);
         sprite.setScale(2);
     }
 
