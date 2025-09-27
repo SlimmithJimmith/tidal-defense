@@ -12,10 +12,11 @@ public class Lifeguard {
     public Sprite sprite;
     public float speed = 300;
 
+    //Lifeguard image
     public Lifeguard(Texture img){
         sprite = new Sprite(img);
         position = new Vector2(Gdx.graphics.getWidth()/2,sprite.getScaleY()*sprite.getHeight()/2);
-        sprite.setScale(4);
+        sprite.setScale(2);
     }
 
     //Move lifeguard left and right
