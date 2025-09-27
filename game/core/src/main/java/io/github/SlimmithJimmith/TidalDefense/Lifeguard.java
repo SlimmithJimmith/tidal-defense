@@ -16,7 +16,7 @@ public class Lifeguard {
     public Lifeguard(Texture img){
         sprite = new Sprite(img);
         position = new Vector2((float) Gdx.graphics.getWidth() /2,sprite.getScaleY()*sprite.getHeight()/2);
-        sprite.setScale(2);
+        sprite.setScale(2); //Adjust value up or down to make smaller or larger.
     }
 
     //Move lifeguard left and right
