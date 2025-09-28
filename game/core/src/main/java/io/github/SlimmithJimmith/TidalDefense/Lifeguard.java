@@ -16,7 +16,7 @@ public class Lifeguard {
     private float speed = 300;
     private float speed_bullet = 1000;
     private float gunAnchor_X = 0.52f; //0.0 is the left edge of sprite, 1.0 is right edge. This will be almost center
-    private float gunAnchor_Y = 0.98f; //0.0 is the bottom of sprite, 1.0 is the top. This will make bullet come out top
+    private float gunAnchor_Y = 0.90f; //0.0 is the bottom of sprite, 1.0 is the top. This will make bullet come out top
 
     public Lifeguard(Texture img, Texture img_bullet, Color color){
         lifeguard_sprite = new Sprite(img); //Lifeguard sprite
@@ -25,13 +25,13 @@ public class Lifeguard {
         float startY = 6f; //Offsets the lifeguard so it starts slightly above bottom of screen
         position = new Vector2(startX, startY); //Positions the lifeguard
         bullet_sprite = new Sprite(img_bullet); //Bullet sprite
-        bullet_sprite.setSize(50,16); //Adjust to change size of the bullets
+        bullet_sprite.setSize(20,16); //Adjust to change size of the bullets
         bullet_sprite.setColor(color); //ability to change color of bullet in main
         position_bullet = new Vector2(0,10000); //Position of the bullet
     }
 
     public void Update(float deltaTime){
-        if(Gdx.input.isButtonJustPressed(0)){
+        if(Gdx.input.isButtonJustPressed(0) && position_bullet.y >=Gdx.graphics.getHeight()){
             float gunX = position.x + lifeguard_sprite.getWidth() * gunAnchor_X;
             float gunY = position.y + lifeguard_sprite.getHeight() * gunAnchor_Y;
 
