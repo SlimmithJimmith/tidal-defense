@@ -16,6 +16,7 @@ public class Core extends ApplicationAdapter {
     private Texture img_lifeguard;
     private Texture img_bullet;
     private Texture img_enemy;
+    private Texture img_background;
     Lifeguard lifeguard; //Instantiate lifeguard object
     Enemy[] enemies; //Instantiate enemy object
     private int numWidth_enemies = 11; //Sets width of enemy
@@ -37,6 +38,7 @@ public class Core extends ApplicationAdapter {
         img_lifeguard = new Texture("LifeguardShootingUp.png"); //loads lifeguad image
         img_bullet = new Texture("Bullet.png"); //loads bullet image
         img_enemy = new Texture("Fish.png");
+        img_background = new Texture("Background.png");
         lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE); //creates lifeguard + bullet, bullet color is blue
         enemies = new Enemy[numWidth_enemies * numHeight_enemies]; //creates enemies based on height and width params
         //give space from top of screen for enemy
@@ -61,8 +63,10 @@ public class Core extends ApplicationAdapter {
     @Override
     public void render() {
         float deltaTime = Gdx.graphics.getDeltaTime();
+
         //Moves the enemies
         offset_enemies.x+= direction_enemies * deltaTime * speed_enemies;
+
         //This block makes the enemies move
         for (int i = 0; i < enemies.length; i++) {
             enemies[i].position.set(
@@ -70,8 +74,10 @@ public class Core extends ApplicationAdapter {
                 enemies[i].position_initial.y + offset_enemies.y
             );
         }
+
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         batch.begin();
+        batch.draw(img_background, 0, 0);
         lifeguard.Draw(batch);
         for (int i = 0; i < enemies.length; i++) {
             //Check to see if bullet overlaps with enemy. If so, enemy "dies" (gets deleted from screen).
@@ -159,6 +165,7 @@ public class Core extends ApplicationAdapter {
         img_lifeguard.dispose();
         img_bullet.dispose();
         img_enemy.dispose();
+        img_background.dispose();
     }
 }
 
