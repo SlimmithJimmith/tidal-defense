@@ -251,7 +251,7 @@ public class Core extends ApplicationAdapter {
         }
     }
 
-    //Buttons will not distort when the screen is resized
+    //Buttons will not distort when the screen is resized.
     @Override
     public void resize(int width, int height) {
         menuStage.getViewport().update(width, height, true);
