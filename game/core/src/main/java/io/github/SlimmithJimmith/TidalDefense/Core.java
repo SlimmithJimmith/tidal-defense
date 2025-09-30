@@ -42,7 +42,6 @@ public class Core extends ApplicationAdapter {
     //Offset to move the enemies
     private Vector2 offset_enemies;
 
-
     private Stage menuStage;
     private boolean showingMenu = true;
     private Table settingsTable;
