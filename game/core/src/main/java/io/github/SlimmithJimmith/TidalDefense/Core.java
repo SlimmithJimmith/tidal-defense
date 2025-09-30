@@ -18,6 +18,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.utils.Scaling;
 
 //Test test test
 
@@ -46,6 +48,12 @@ public class Core extends ApplicationAdapter {
     private boolean showingMenu = true;
     private Table settingsTable;
     private boolean showSettings = false;
+
+    // GameOver stage:
+    private Stage gameOverStage;
+    private boolean showGameOver = false;
+    private Texture gameOverTitleTex;
+    private Texture gameOverBgTex;
 
     @Override
     public void create() {
@@ -112,6 +120,72 @@ public class Core extends ApplicationAdapter {
                 i++;
             }
         }
+
+        // Game Over Screen:
+        gameOverStage = new Stage(new ScreenViewport());
+        // Reuse the helper to make buttons:
+        ImageButton playAgainBtn = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
+        ImageButton quitBtnGo = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
+        ImageButton returnMenuBtn = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
+
+        // Functions when user click them:
+        playAgainBtn.addListener(new ClickListener() {
+           @Override
+           public void clicked(InputEvent event, float x, float y) {
+               resetGame();
+               showGameOver = false;
+               Gdx.input.setInputProcessor(null);
+           }
+        });
+
+        quitBtnGo.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gdx.app.exit();
+            }
+        });
+
+        returnMenuBtn.addListener(new ClickListener() {
+           @Override
+            public void clicked(InputEvent event, float x, float y) {
+               resetGame();
+
+               // flip screens
+               showGameOver = false;
+               showingMenu = true;
+
+               // in case it was disposed when we hit Play
+               buildMainMenu();
+
+               Gdx.input.setInputProcessor(menuStage);
+           }
+
+        });
+
+        // Organizing the buttons:
+        Table goTable = new Table();
+        goTable.setFillParent(true);
+        // Background image for Game Over
+        gameOverBgTex = new Texture("GameOver_Bg.png");
+        gameOverBgTex.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear); // smoother scaling
+        goTable.setBackground(new TextureRegionDrawable(new TextureRegion(gameOverBgTex)));
+
+        // keeping content at the top/center over the background
+        goTable.top().center();
+
+        // Game Over title image
+        gameOverTitleTex = new Texture("GameOver_Title.png"); // use .png (or your real extension)
+        Image titleImg = new Image(new TextureRegionDrawable(new TextureRegion(gameOverTitleTex)));
+        titleImg.setScaling(Scaling.fit); // keep aspect ratio
+
+        goTable.top().center(); // top center the content
+        goTable.add(titleImg).padTop(20).padBottom(10).row(); // add some spacing above/below title
+
+        goTable.add(playAgainBtn).width(200).height(80).pad(10).row();
+        goTable.add(quitBtnGo).width(200).height(80).pad(10).row();
+        goTable.add(returnMenuBtn).width(200).height(80).pad(10).row();
+
+        gameOverStage.addActor(goTable);
     }
 
     int amount_alive_enemies = 0;
@@ -120,6 +194,12 @@ public class Core extends ApplicationAdapter {
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        if(showGameOver){
+            gameOverStage.act(Gdx.graphics.getDeltaTime());
+            gameOverStage.draw();
+            return; // skip running the game while Game Over is showing
+        }
 
         if (showingMenu) {
             menuStage.act(Gdx.graphics.getDeltaTime());
@@ -138,6 +218,7 @@ public class Core extends ApplicationAdapter {
             }
             ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
             batch.begin();
+            batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
             lifeguard.Draw(batch);
             for (int i = 0; i < enemies.length; i++) {
                 //Check to see if bullet overlaps with enemy. If so, enemy "dies" (gets deleted from screen).
@@ -206,8 +287,11 @@ public class Core extends ApplicationAdapter {
 
             //If enemies go past bottom of the screen, exit the app.
             //We need to update this so that it shows "game over" and score achived. If score > highscore, update highscore.
+            // If enemies go past bottom of the screen, exit the app.
             if (enemies[minY_enemies].position.y <= 0) {
-                Gdx.app.exit();
+                triggerGameOver();
+                batch.end(); // we already called batch.begin() earlier this frame
+                return; // stop the rest of render() for this frame;
             }
 
             for (int i = 0; i < enemies.length; i++) {
@@ -215,8 +299,11 @@ public class Core extends ApplicationAdapter {
                     enemies[i].Draw(batch);
                     //App closes (game ends) when enemy touches the lifeguard. Fix to show "game over" and score achieved.
                     //If score > highscore, update highscore.
+                    // If enemy touches the lifeguard, show Game Over.
                     if (enemies[i].enemy_sprite.getBoundingRectangle().overlaps(lifeguard.lifeguard_sprite.getBoundingRectangle())) {
-                        Gdx.app.exit();
+                        triggerGameOver();
+                        batch.end();   // batch was begun earlier
+                        return;        // stop the rest of render() for this frame
                     }
                 }
             }
@@ -254,10 +341,78 @@ public class Core extends ApplicationAdapter {
         }
     }
 
+    // Helper methods for GameOver screen:
+    private void triggerGameOver(){
+        showGameOver = true;
+        Gdx.input.setInputProcessor(gameOverStage);
+    }
+
+    private void resetGame(){
+        // Reset enemy movements
+        offset_enemies.set(0,0);
+        direction_enemies = 1;
+        speed_enemies = 200f;
+
+        // Reset lifeguard batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());position and bullets:
+        float startX = Gdx.graphics.getWidth() / 2f - lifeguard.lifeguard_sprite.getWidth() / 2f;
+        lifeguard.position.set(startX, 6f);
+        lifeguard.position_bullet.set(0f, 10000f);
+
+        // Get the enemies back to default amount and initlize positions
+        for (Enemy e: enemies) {
+            e.alive = true;
+            e.position.set(e.position_initial);
+        }
+    }
+
+    private void buildMainMenu() {
+        // First dispose old stages, to avoid leaks
+        if(menuStage != null){
+            try {menuStage.dispose();
+            }
+            catch (Exception ignored){}
+        }
+
+        menuStage = new Stage(new ScreenViewport());
+
+        ImageButton playButton = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
+        ImageButton quitButton = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
+        ImageButton settingsButton = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
+
+        playButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showingMenu = false;
+                // optional: dispose the menu now that we're entering gameplay
+                menuStage.dispose();
+                // (we don’t need to set to null; we rebuild via buildMainMenu() when needed)
+            }
+        });
+
+        quitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                Gdx.app.exit();
+            }
+        });
+
+        Table mainMenuTable = new Table();
+        mainMenuTable.setFillParent(true);
+        mainMenuTable.center();
+        mainMenuTable.add(playButton).width(200).height(80).pad(10).row();
+        mainMenuTable.add(quitButton).width(200).height(80).pad(10).row();
+        mainMenuTable.add(settingsButton).width(200).height(80).pad(10).row();
+
+        menuStage.addActor(mainMenuTable);
+    }
+
     //Buttons will not distort when the screen is resized.
     @Override
     public void resize(int width, int height) {
 //        menuStage.getViewport().update(width, height, true);
+        if (menuStage != null)     menuStage.getViewport().update(width, height, true);
+        if (gameOverStage != null) gameOverStage.getViewport().update(width, height, true);
+
     }
 
     @Override
@@ -268,6 +423,9 @@ public class Core extends ApplicationAdapter {
         img_bullet.dispose();
         img_enemy.dispose();
         img_background.dispose();
+        if (gameOverTitleTex != null) gameOverTitleTex.dispose();
+        if (gameOverStage != null) gameOverStage.dispose();
+        if (gameOverBgTex != null) gameOverBgTex.dispose();
     }
 }
 
