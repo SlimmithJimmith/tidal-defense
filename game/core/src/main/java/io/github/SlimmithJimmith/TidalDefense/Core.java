@@ -43,43 +43,47 @@ public class Core extends ApplicationAdapter {
     private Vector2 offset_enemies;
 
 
-    private Stage menuStage;
-    private boolean showingMenu = true;
+//    private Stage menuStage;
+//    private boolean showingMenu = true;
+//    private Table settingsTable;
+//    private boolean showSettings = false;
 
     @Override
     public void create() {
-        menuStage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(menuStage);
+//        menuStage = new Stage(new ScreenViewport());
+//        Gdx.input.setInputProcessor(menuStage);
 
         //Helper method creates the buttons
-        ImageButton playButton = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
-        ImageButton quitButton = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
+        //ImageButton playButton = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
+        //ImageButton quitButton = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
+        //ImageButton settingsButton = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
 
         //Listener listens for the click on the button
-        playButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                showingMenu = false;    //Closes menu
-                menuStage.dispose();    //Removes button actions from screen
-            }
-        });
+//        playButton.addListener(new ClickListener() {
+//            @Override
+//            public void clicked(InputEvent event, float x, float y) {
+//                showingMenu = false;    //Closes menu
+//                menuStage.dispose();    //Removes button actions from screen
+//            }
+//        });
 
-        quitButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                Gdx.app.exit();     //Closes the application from the menu
-            }
-        });
+//        quitButton.addListener(new ClickListener() {
+//            @Override
+//            public void clicked(InputEvent event, float x, float y) {
+//                Gdx.app.exit();     //Closes the application from the menu
+//            }
+//        });
 
         //Build the table of buttons
-        Table table = new Table();
-        table.setFillParent(true);
-        table.center();
-
-        table.add(playButton).width(200).height(80).pad(10).row();
-        table.add(quitButton).width(200).height(80).pad(10).row();
-
-        menuStage.addActor(table);
+//        Table mainMenuTable = new Table();
+//        mainMenuTable.setFillParent(true);
+//        mainMenuTable.center();
+//
+//        mainMenuTable.add(playButton).width(200).height(80).pad(10).row();
+//        mainMenuTable.add(quitButton).width(200).height(80).pad(10).row();
+//        mainMenuTable.add(settingsButton).width(200).height(80).pad(10).row();
+//
+//        menuStage.addActor(mainMenuTable);
 
         offset_enemies = new Vector2(0,0);
         batch = new SpriteBatch();
@@ -115,45 +119,17 @@ public class Core extends ApplicationAdapter {
     @Override
     public void render() {
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+//        Gdx.gl.glClearColor(0, 0, 0, 1);
+//        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+//
+//        if (showingMenu) {
+//            menuStage.act(Gdx.graphics.getDeltaTime());
+//            menuStage.draw();
+//        } else {
 
-        if (showingMenu) {
-            menuStage.act(Gdx.graphics.getDeltaTime());
-            menuStage.draw();
-        } else {
-            //
-            float deltaTime = Gdx.graphics.getDeltaTime();
-
-            //Moves the enemies
-            offset_enemies.x += direction_enemies * deltaTime * speed_enemies;
-
-            //This block makes the enemies move
-            for (int i = 0; i < enemies.length; i++) {
-                enemies[i].position.set(
-                    enemies[i].position_initial.x + offset_enemies.x,
-                    enemies[i].position_initial.y + offset_enemies.y
-                );
-            }
-
-            ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-            batch.begin();
-            lifeguard.Draw(batch);
-            for (int i = 0; i < enemies.length; i++) {
-
-                //Check to see if bullet overlaps with enemy. If so, enemy "dies" (gets deleted from screen).
-                //Must check if they are alive first, or bullet will stop at first level.
-                if (enemies[i].alive) {
-                    if (lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())) {
-                        lifeguard.position_bullet.y = 100000;
-                        enemies[i].alive = false;
-                        break;
-                    }
         float deltaTime = Gdx.graphics.getDeltaTime();
-
         //Moves the enemies
-        offset_enemies.x+= direction_enemies * deltaTime * speed_enemies;
-
+        offset_enemies.x += direction_enemies * deltaTime * speed_enemies;
         //This block makes the enemies move
         for (int i = 0; i < enemies.length; i++) {
             enemies[i].position.set(
@@ -161,22 +137,21 @@ public class Core extends ApplicationAdapter {
                 enemies[i].position_initial.y + offset_enemies.y
             );
         }
-
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         batch.begin();
-        batch.draw(img_background, 0, 0);
         lifeguard.Draw(batch);
         for (int i = 0; i < enemies.length; i++) {
             //Check to see if bullet overlaps with enemy. If so, enemy "dies" (gets deleted from screen).
             //Must check if they are alive first, or bullet will stop at first level.
-            if(enemies[i].alive){
-                if(lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())){
+            if (enemies[i].alive) {
+                if (lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())) {
                     lifeguard.position_bullet.y = 100000;
                     enemies[i].alive = false;
                     break;
                 }
             }
-
+        }
+//        batch.draw(img_background, 0, 0);
             //Variables for enemy movement
             amount_alive_enemies = 0;
             boolean seeded = false;
@@ -249,39 +224,40 @@ public class Core extends ApplicationAdapter {
 
             batch.end();
         }
-    }
+
+
 
     /*
     Try/catch is used to catch and display runtime errors when building the buttons
      */
     //Helper method to build the buttons using their texture files
-    private ImageButton makeButton(String upFile, String downFile){
-        //Load textures for the play button
-        try {
-            Texture upTex = new Texture(Gdx.files.internal(upFile));
-            Texture downTex = new Texture(Gdx.files.internal(downFile));
-
-            //Create Drawables for play button
-            TextureRegionDrawable upDrawable = new TextureRegionDrawable(new TextureRegion(upTex));
-            TextureRegionDrawable downDrawable = new TextureRegionDrawable(new TextureRegion(downTex));
-
-            return new ImageButton(upDrawable, downDrawable);
-
-        }catch (Exception e){
-            e.printStackTrace();
-            Pixmap pixmap = new Pixmap(100, 50, Pixmap.Format.RGBA8888);
-            pixmap.setColor(Color.WHITE);
-            pixmap.fill();
-            Texture fallbackTex = new Texture(pixmap);
-            TextureRegionDrawable fallbackDrawable = new TextureRegionDrawable(new TextureRegion(fallbackTex));
-            return new ImageButton(fallbackDrawable, fallbackDrawable);
-        }
-    }
+//    private ImageButton makeButton(String upFile, String downFile){
+//        //Load textures for the play button
+//        try {
+//            Texture upTex = new Texture(Gdx.files.internal(upFile));
+//            Texture downTex = new Texture(Gdx.files.internal(downFile));
+//
+//            //Create Drawables for play button
+//            TextureRegionDrawable upDrawable = new TextureRegionDrawable(new TextureRegion(upTex));
+//            TextureRegionDrawable downDrawable = new TextureRegionDrawable(new TextureRegion(downTex));
+//
+//            return new ImageButton(upDrawable, downDrawable);
+//
+//        }catch (Exception e){
+//            e.printStackTrace();
+//            Pixmap pixmap = new Pixmap(100, 50, Pixmap.Format.RGBA8888);
+//            pixmap.setColor(Color.WHITE);
+//            pixmap.fill();
+//            Texture fallbackTex = new Texture(pixmap);
+//            TextureRegionDrawable fallbackDrawable = new TextureRegionDrawable(new TextureRegion(fallbackTex));
+//            return new ImageButton(fallbackDrawable, fallbackDrawable);
+//        }
+//    }
 
     //Buttons will not distort when the screen is resized.
     @Override
     public void resize(int width, int height) {
-        menuStage.getViewport().update(width, height, true);
+//        menuStage.getViewport().update(width, height, true);
     }
 
     @Override
