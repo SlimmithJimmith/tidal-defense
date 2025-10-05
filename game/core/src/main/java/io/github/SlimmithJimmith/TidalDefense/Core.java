@@ -44,10 +44,14 @@ public class Core extends ApplicationAdapter {
     //Offset to move the enemies
     private Vector2 offset_enemies;
 
+    // Menu variables
     private Stage menuStage;
-    private boolean showingMenu = true;
     private Table settingsTable;
+    private Table mainMenuTable;
+    private boolean showingMenu = true;
     private boolean showSettings = false;
+    private boolean paused = false;
+    private boolean running = true;
 
     // GameOver stage:
     private Stage gameOverStage;
@@ -59,38 +63,7 @@ public class Core extends ApplicationAdapter {
     public void create() {
         menuStage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(menuStage);
-
-//        Helper method creates the buttons
-        ImageButton playButton = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
-        ImageButton quitButton = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
-        ImageButton settingsButton = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
-
-        //Listener listens for the click on the button
-        playButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                showingMenu = false;    //Closes menu
-                menuStage.dispose();    //Removes button actions from screen
-            }
-        });
-
-        quitButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                Gdx.app.exit();     //Closes the application from the menu
-            }
-        });
-
-        //Build the table of buttons
-        Table mainMenuTable = new Table();
-        mainMenuTable.setFillParent(true);
-        mainMenuTable.center();
-
-        mainMenuTable.add(playButton).width(200).height(80).pad(10).row();
-        mainMenuTable.add(quitButton).width(200).height(80).pad(10).row();
-        mainMenuTable.add(settingsButton).width(200).height(80).pad(10).row();
-
-        menuStage.addActor(mainMenuTable);
+        mainMenu();
 
         offset_enemies = new Vector2(0,0);
         batch = new SpriteBatch();
@@ -121,12 +94,15 @@ public class Core extends ApplicationAdapter {
             }
         }
 
+        // Jimi - I'd recommend moving all the Game Over Screen code to its own function and calling it from right here instead of having
+        // all the code inside create(). This will give us more organization and cleaner code.
+
         // Game Over Screen:
         gameOverStage = new Stage(new ScreenViewport());
         // Reuse the helper to make buttons:
         ImageButton playAgainBtn = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
         ImageButton quitBtnGo = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
-        ImageButton returnMenuBtn = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
+        ImageButton returnMenuBtn = makeButton("button/return-button.png", "button/return-pressed-button.png");
 
         // Functions when user click them:
         playAgainBtn.addListener(new ClickListener() {
@@ -155,9 +131,9 @@ public class Core extends ApplicationAdapter {
                showingMenu = true;
 
                // in case it was disposed when we hit Play
-               buildMainMenu();
+               mainMenu();
 
-               Gdx.input.setInputProcessor(menuStage);
+               //Gdx.input.setInputProcessor(menuStage);
            }
 
         });
@@ -192,132 +168,142 @@ public class Core extends ApplicationAdapter {
     @Override
     public void render() {
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            Gdx.gl.glClearColor(0, 0, 0, 1);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        if(showGameOver){
-            gameOverStage.act(Gdx.graphics.getDeltaTime());
-            gameOverStage.draw();
-            return; // skip running the game while Game Over is showing
-        }
-
-        if (showingMenu) {
             menuStage.act(Gdx.graphics.getDeltaTime());
             menuStage.draw();
-        } else {
-            //
-            float deltaTime = Gdx.graphics.getDeltaTime();
-            //Moves the enemies
-            offset_enemies.x += direction_enemies * deltaTime * speed_enemies;
-            //This block makes the enemies move
-            for (int i = 0; i < enemies.length; i++) {
-                enemies[i].position.set(
-                    enemies[i].position_initial.x + offset_enemies.x,
-                    enemies[i].position_initial.y + offset_enemies.y
-                );
+
+            if (showGameOver) {
+                gameOverStage.act(Gdx.graphics.getDeltaTime());
+                gameOverStage.draw();
+                return; // skip running the game while Game Over is showing
             }
-            ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-            batch.begin();
-            batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-            lifeguard.Draw(batch);
-            for (int i = 0; i < enemies.length; i++) {
-                //Check to see if bullet overlaps with enemy. If so, enemy "dies" (gets deleted from screen).
-                //Must check if they are alive first, or bullet will stop at first level.
-                if (enemies[i].alive) {
-                    if (lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())) {
-                        lifeguard.position_bullet.y = 100000;
-                        enemies[i].alive = false;
-                        break;
+
+            // If the game is running and not paused, the gameplay will run.
+            if (running && !paused) {
+
+                //If the menu is not showing, the gameplay will run.
+                if (!showingMenu) {
+
+                    float deltaTime = Gdx.graphics.getDeltaTime();
+                    //Moves the enemies
+                    offset_enemies.x += direction_enemies * deltaTime * speed_enemies;
+                    //This block makes the enemies move
+                    for (int i = 0; i < enemies.length; i++) {
+                        enemies[i].position.set(
+                            enemies[i].position_initial.x + offset_enemies.x,
+                            enemies[i].position_initial.y + offset_enemies.y
+                        );
                     }
-                }
-            }
-
-            //Variables for enemy movement
-            amount_alive_enemies = 0;
-            boolean seeded = false;
-            for (int i = 0; i < enemies.length; i++) {
-                if (enemies[i].alive) {
-                    int indexX = i % numWidth_enemies; //Columns
-                    int indexY = i / numWidth_enemies; //Rows
-
-                    if (!seeded) {
-
-                        // seed min/max with the first alive enemy
-                        minX_enemies = maxX_enemies = minY_enemies = maxY_enemies = i;
-                        seeded = true;
-                    } else {
-                        if (indexX > maxX_enemies) maxX_enemies = i;
-                        if (indexX < minX_enemies) minX_enemies = i;
-                        if (indexY > maxY_enemies) maxY_enemies = i;
-                        if (indexY < minY_enemies) minY_enemies = i;
+                    ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
+                    batch.begin();
+                    batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+                    lifeguard.Draw(batch);
+                    for (int i = 0; i < enemies.length; i++) {
+                        //Check to see if bullet overlaps with enemy. If so, enemy "dies" (gets deleted from screen).
+                        //Must check if they are alive first, or bullet will stop at first level.
+                        if (enemies[i].alive) {
+                            if (lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())) {
+                                lifeguard.position_bullet.y = 100000;
+                                enemies[i].alive = false;
+                                break;
+                            }
+                        }
                     }
 
-                    amount_alive_enemies++;
-                }
-            }
+                    //Variables for enemy movement
+                    amount_alive_enemies = 0;
+                    boolean seeded = false;
+                    for (int i = 0; i < enemies.length; i++) {
+                        if (enemies[i].alive) {
+                            int indexX = i % numWidth_enemies; //Columns
+                            int indexY = i / numWidth_enemies; //Rows
 
-            //Regenerates enemies when all are destroyed
-            if (amount_alive_enemies == 0) {
-                for (int i = 0; i < enemies.length; i++) {
-                    enemies[i].alive = true;
-                }
-                offset_enemies = new Vector2(0, 0);
-                batch.end();
-                return;
-            }
+                            if (!seeded) {
 
-            //Bounds checking to ensure enemies do not exit the RIGHT side of the screen
-            float rightLimit = Gdx.graphics.getWidth() - enemies[0].enemy_sprite.getWidth();
-            if (enemies[maxX_enemies].position.x >= rightLimit) {
-                direction_enemies = -1;
-                //Makes the enemies go down towards the lifeguard
-                offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
-                //Makes the speed of the enemies increase over time.
-                speed_enemies += 0.1f;
-            }
+                                // seed min/max with the first alive enemy
+                                minX_enemies = maxX_enemies = minY_enemies = maxY_enemies = i;
+                                seeded = true;
+                            } else {
+                                if (indexX > maxX_enemies) maxX_enemies = i;
+                                if (indexX < minX_enemies) minX_enemies = i;
+                                if (indexY > maxY_enemies) maxY_enemies = i;
+                                if (indexY < minY_enemies) minY_enemies = i;
+                            }
 
-            //Bounds checking to ensure enemies do not exit the LEFT side of the screen
-            if (enemies[minX_enemies].position.x <= 0f) {
-                direction_enemies = 1;
-                //Makes the enemies go down towards the lifeguard
-                offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
-                //Makes the speed of the enemies increase over time.
-                speed_enemies += 0.1f;
-            }
+                            amount_alive_enemies++;
+                        }
+                    }
 
-            //If enemies go past bottom of the screen, exit the app.
-            //We need to update this so that it shows "game over" and score achived. If score > highscore, update highscore.
-            // If enemies go past bottom of the screen, exit the app.
-            if (enemies[minY_enemies].position.y <= 0) {
-                triggerGameOver();
-                batch.end(); // we already called batch.begin() earlier this frame
-                return; // stop the rest of render() for this frame;
-            }
+                    //Regenerates enemies when all are destroyed
+                    if (amount_alive_enemies == 0) {
+                        for (int i = 0; i < enemies.length; i++) {
+                            enemies[i].alive = true;
+                        }
+                        offset_enemies = new Vector2(0, 0);
+                        batch.end();
+                        return;
+                    }
 
-            for (int i = 0; i < enemies.length; i++) {
-                if (enemies[i].alive) {
-                    enemies[i].Draw(batch);
-                    //App closes (game ends) when enemy touches the lifeguard. Fix to show "game over" and score achieved.
-                    //If score > highscore, update highscore.
-                    // If enemy touches the lifeguard, show Game Over.
-                    if (enemies[i].enemy_sprite.getBoundingRectangle().overlaps(lifeguard.lifeguard_sprite.getBoundingRectangle())) {
+                    //Bounds checking to ensure enemies do not exit the RIGHT side of the screen
+                    float rightLimit = Gdx.graphics.getWidth() - enemies[0].enemy_sprite.getWidth();
+                    if (enemies[maxX_enemies].position.x >= rightLimit) {
+                        direction_enemies = -1;
+                        //Makes the enemies go down towards the lifeguard
+                        offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
+                        //Makes the speed of the enemies increase over time.
+                        speed_enemies += 0.1f;
+                    }
+
+                    //Bounds checking to ensure enemies do not exit the LEFT side of the screen
+                    if (enemies[minX_enemies].position.x <= 0f) {
+                        direction_enemies = 1;
+                        //Makes the enemies go down towards the lifeguard
+                        offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
+                        //Makes the speed of the enemies increase over time.
+                        speed_enemies += 0.1f;
+                    }
+
+                    //If enemies go past bottom of the screen, exit the app.
+                    //We need to update this so that it shows "game over" and score achived. If score > highscore, update highscore.
+                    // If enemies go past bottom of the screen, exit the app.
+                    if (enemies[minY_enemies].position.y <= 0) {
                         triggerGameOver();
-                        batch.end();   // batch was begun earlier
-                        return;        // stop the rest of render() for this frame
+                        batch.end(); // we already called batch.begin() earlier this frame
+                        return; // stop the rest of render() for this frame;
                     }
-                }
-            }
 
-            batch.end();
-        }
-    }
+                    for (int i = 0; i < enemies.length; i++) {
+                        if (enemies[i].alive) {
+                            enemies[i].Draw(batch);
+                            //App closes (game ends) when enemy touches the lifeguard. Fix to show "game over" and score achieved.
+                            //If score > highscore, update highscore.
+                            // If enemy touches the lifeguard, show Game Over.
+                            if (enemies[i].enemy_sprite.getBoundingRectangle().overlaps(lifeguard.lifeguard_sprite.getBoundingRectangle())) {
+                                triggerGameOver();
+                                batch.end();   // batch was begun earlier
+                                return;        // stop the rest of render() for this frame
+                            }
+                        }
+                    }
 
-
+                    batch.end();
+                } // End if (!showingMenu)
+            } // End if (running && !paused)
+    } // End render()
 
     /*
     Try/catch is used to catch and display runtime errors when building the buttons
+    If you run into any issues and see a white box, there may be a typo in your file name.
      */
-    //Helper method to build the buttons using their texture files
+    /**
+     * Helper method to build the buttons using their texture files
+     *
+     * @param upFile unpressed look for the button
+     * @param downFile pressed look for the button
+     * @return drawable button
+     */
     private ImageButton makeButton(String upFile, String downFile){
         //Load textures for the play button
         try {
@@ -365,54 +351,123 @@ public class Core extends ApplicationAdapter {
         }
     }
 
-    private void buildMainMenu() {
-        // First dispose old stages, to avoid leaks
-        if(menuStage != null){
-            try {menuStage.dispose();
-            }
-            catch (Exception ignored){}
-        }
-
-        menuStage = new Stage(new ScreenViewport());
+    /**
+     * mainMenu builds the buttons for the menu. Each button has its own
+     * listener to "listen" for the click of the button.This will trigger
+     * whatever the buttons purpose is.
+     */
+    private void mainMenu(){
+        // Clear any existing tables.
+        clearTables();
 
         ImageButton playButton = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
-        ImageButton quitButton = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
-        ImageButton settingsButton = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
 
+        // Listener listens for the click on the button.
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                showingMenu = false;
-                // optional: dispose the menu now that we're entering gameplay
-                menuStage.dispose();
-                // (we don’t need to set to null; we rebuild via buildMainMenu() when needed)
+                clearTables();
+                paused = false;         // Game is not paused.
+                running = true;         // Game is running.
+                showingMenu = false;    // Closes menu.
             }
         });
 
+        ImageButton quitButton = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
         quitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                Gdx.app.exit();
+                Gdx.app.exit();     // Closes the application from the menu.
             }
         });
 
-        Table mainMenuTable = new Table();
+        ImageButton settingsButton = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
+        settingsButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                System.out.println("Settings button clicked!");
+                paused = true;
+                settingsMenu();
+            }
+        });
+
+        // Don't have a listener for this button at this time.
+        ImageButton leaderboardButton = makeButton("button/leaderboard-button-1.png", "button/leaderboard-pressed-button-1.png");
+
+        // Build the table of buttons.
+        mainMenuTable = new Table();
         mainMenuTable.setFillParent(true);
         mainMenuTable.center();
+
+        // Add the buttons to the table.
         mainMenuTable.add(playButton).width(200).height(80).pad(10).row();
         mainMenuTable.add(quitButton).width(200).height(80).pad(10).row();
         mainMenuTable.add(settingsButton).width(200).height(80).pad(10).row();
+        mainMenuTable.add(leaderboardButton).width(200).height(80).pad(10).row();
 
+        //Add the actor (button) to the stage.
         menuStage.addActor(mainMenuTable);
+
+        // Event handler for the input on the stage.
+        Gdx.input.setInputProcessor(menuStage);
+    }
+    /**
+     * settingsMenu clears the screen of any existing buttons and builds the
+     * buttons for the settings screen. Each button will have their own listener
+     * to tigger their events.
+     */
+    private void settingsMenu() {
+        // Clear any existing tables.
+        clearTables();
+        menuStage.clear();
+
+        // Build the buttons and their listeners. (Only 1 right now :) )
+        ImageButton backButton = makeButton("button/back-button.png", "button/back-pressed-button.png");
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                mainMenu();
+            }
+        });
+
+        // Build the table of buttons.
+        settingsTable = new Table();
+        settingsTable.setFillParent(true);
+        settingsTable.center();
+
+        // Add the button to the table.
+        settingsTable.add(backButton).width(200).height(80).pad(10).row();
+
+        // Add the actor (button) to the stage.
+        menuStage.addActor(settingsTable);
+
+        // Event handler for the input on the stage.
+        Gdx.input.setInputProcessor(menuStage);
+    }
+
+    /**
+     * Clears the table from the stage before adding a new table
+     * to the stage. Keeps tables from overlapping.
+     */
+    private void clearTables() {
+        if(mainMenuTable != null) {
+            mainMenuTable.remove();
+            mainMenuTable = null;
+        }
+
+        if(settingsTable != null) {
+            settingsTable.remove();
+            settingsTable = null;
+        }
     }
 
     //Buttons will not distort when the screen is resized.
     @Override
     public void resize(int width, int height) {
-//        menuStage.getViewport().update(width, height, true);
+        //I have this commented out since the game is not resizable at this time, the buttons don't need to be either.
+        //menuStage.getViewport().update(width, height, true);
         if (menuStage != null)     menuStage.getViewport().update(width, height, true);
         if (gameOverStage != null) gameOverStage.getViewport().update(width, height, true);
-
     }
 
     @Override
