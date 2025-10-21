@@ -3,6 +3,8 @@ package io.github.SlimmithJimmith.TidalDefense;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -59,11 +61,53 @@ public class Core extends ApplicationAdapter {
     private Texture gameOverTitleTex;
     private Texture gameOverBgTex;
 
+    // Sound
+    Sound bullet_sound;
+    Sound button_click_sound;
+    Sound enemy_death;
+
+    // Bg Music
+    Music music;
+    private boolean musicEnabled = true; // toggle button (initially true)
+
+    // image files for each case.
+    private Texture soundOnTex, soundOnPressedTex, soundOffTex, soundOffPressedTex;
+
+    // We need this so we can display the textures for Scene2D to the button
+    private TextureRegionDrawable soundOn, soundOnPressed, soundOff, soundOffPressed;
+
     @Override
     public void create() {
         menuStage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(menuStage);
         mainMenu();
+
+        // Sound
+        bullet_sound = Gdx.audio.newSound(Gdx.files.internal("sounds/gun_shot.mp3"));
+        button_click_sound = Gdx.audio.newSound(Gdx.files.internal("sounds/button_click.mp3"));
+        enemy_death = Gdx.audio.newSound(Gdx.files.internal("sounds/enemy_death.mp3"));
+
+        // Bg music
+        music = Gdx.audio.newMusic(Gdx.files.internal("sounds/bg_music.mp3"));
+        music.setLooping(true); // repeat forever
+
+        // Play only if music is enabled
+        if (musicEnabled) {
+            music.play();
+        }
+
+        // Load the image files for each button case
+        soundOnTex = new Texture(Gdx.files.internal("button/music-on.png"));
+        soundOnPressedTex = new Texture(Gdx.files.internal("button/music-on-pressed.png"));
+        soundOffTex = new Texture(Gdx.files.internal("button/music-off.png"));
+        soundOffPressedTex = new Texture(Gdx.files.internal("button/music-off-pressed.png"));
+
+        // Wrap each texture into a TextureRegionDrawable
+        // We did this since Scene2D buttons only understand drawables, not raw textures.
+        soundOn = new TextureRegionDrawable(new TextureRegion(soundOnTex));
+        soundOnPressed = new TextureRegionDrawable(new TextureRegion(soundOnPressedTex));
+        soundOff = new TextureRegionDrawable(new TextureRegion(soundOffTex));
+        soundOffPressed = new TextureRegionDrawable(new TextureRegion(soundOffPressedTex));
 
         offset_enemies = new Vector2(0,0);
         batch = new SpriteBatch();
@@ -71,7 +115,7 @@ public class Core extends ApplicationAdapter {
         img_bullet = new Texture("Bullet.png"); //loads bullet image
         img_enemy = new Texture("Fish.png");
         img_background = new Texture("Background.png");
-        lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE); //creates lifeguard + bullet, bullet color is blue
+        lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE, bullet_sound); //creates lifeguard + bullet, bullet color is blue
         enemies = new Enemy[numWidth_enemies * numHeight_enemies]; //creates enemies based on height and width params
 
         //give space from top of screen for enemy
@@ -111,12 +155,14 @@ public class Core extends ApplicationAdapter {
                resetGame();
                showGameOver = false;
                Gdx.input.setInputProcessor(null);
+               button_click_sound.play();
            }
         });
 
         quitBtnGo.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                button_click_sound.play();
                 Gdx.app.exit();
             }
         });
@@ -124,6 +170,7 @@ public class Core extends ApplicationAdapter {
         returnMenuBtn.addListener(new ClickListener() {
            @Override
             public void clicked(InputEvent event, float x, float y) {
+               button_click_sound.play();
                resetGame();
 
                // flip screens
@@ -205,6 +252,7 @@ public class Core extends ApplicationAdapter {
                         //Must check if they are alive first, or bullet will stop at first level.
                         if (enemies[i].alive) {
                             if (lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())) {
+                                enemy_death.play();
                                 lifeguard.position_bullet.y = 100000;
                                 enemies[i].alive = false;
                                 break;
@@ -366,6 +414,7 @@ public class Core extends ApplicationAdapter {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                button_click_sound.play();
                 clearTables();
                 paused = false;         // Game is not paused.
                 running = true;         // Game is running.
@@ -377,6 +426,7 @@ public class Core extends ApplicationAdapter {
         quitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                button_click_sound.play();
                 Gdx.app.exit();     // Closes the application from the menu.
             }
         });
@@ -385,6 +435,7 @@ public class Core extends ApplicationAdapter {
         settingsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                button_click_sound.play();
                 System.out.println("Settings button clicked!");
                 paused = true;
                 settingsMenu();
@@ -426,7 +477,42 @@ public class Core extends ApplicationAdapter {
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                button_click_sound.play();
                 mainMenu();
+            }
+        });
+
+        // I did this so we later update it according to the local saved file for each user
+        // Create music toggle button (according to the initial settings)
+        // If musicEnabled = true -> show (music-on) icon
+        // If musicEnabled = false -> show (music-off) icon
+        ImageButton musicBtn = new ImageButton(
+            musicEnabled ? soundOn : soundOff,
+            musicEnabled ? soundOnPressed : soundOffPressed
+        );
+
+        musicBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                button_click_sound.play(); // click sound
+
+                // Flip music state: if On then Off, and vice versa.
+                musicEnabled = !musicEnabled;
+
+                // If music is now enabled, start or resume playing it
+                if (musicEnabled) {
+                    if (!music.isPlaying()) music.play(); // Resume if it was paused
+
+                    // Update the button icon to show (music:on)
+                    musicBtn.getStyle().imageUp   = soundOn;
+                    musicBtn.getStyle().imageDown = soundOnPressed;
+                } else {
+                    // Otherwise, pause the music
+                    music.pause();
+                    // Update the button icon to show (music:off)
+                    musicBtn.getStyle().imageUp   = soundOff;
+                    musicBtn.getStyle().imageDown = soundOffPressed;
+                }
             }
         });
 
@@ -435,7 +521,8 @@ public class Core extends ApplicationAdapter {
         settingsTable.setFillParent(true);
         settingsTable.center();
 
-        // Add the button to the table.
+        // Add the button to the table. (Music toggle first,then Back)
+        settingsTable.add(musicBtn).width(200).height(80).pad(10).row();
         settingsTable.add(backButton).width(200).height(80).pad(10).row();
 
         // Add the actor (button) to the stage.
@@ -481,6 +568,11 @@ public class Core extends ApplicationAdapter {
         if (gameOverTitleTex != null) gameOverTitleTex.dispose();
         if (gameOverStage != null) gameOverStage.dispose();
         if (gameOverBgTex != null) gameOverBgTex.dispose();
+        if (soundOnTex != null)  soundOnTex.dispose();
+        if (soundOnPressedTex != null) soundOnPressedTex.dispose();
+        if (soundOffTex != null)  soundOffTex.dispose();
+        if (soundOffPressedTex != null) soundOffPressedTex.dispose();
+        if (music != null) music.dispose();
     }
 }
 
