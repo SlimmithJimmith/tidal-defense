@@ -23,23 +23,28 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.utils.Scaling;
 
+//Test test test
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Core extends ApplicationAdapter {
-
-    // Images for objects
     private SpriteBatch batch;
     private Texture img_lifeguard;
     private Texture img_bullet;
     private Texture img_enemy;
     private Texture img_background;
-
-    //Instantiate lifeguard object
-    Lifeguard lifeguard;
-
-    // Enemy setup
-    EnemyManager enemyManager;
-    int currentLevel = 1;
+    Lifeguard lifeguard; //Instantiate lifeguard object
+    Enemy[] enemies; //Instantiate enemy object
+    private int numWidth_enemies = 11; //Sets width of enemy
+    private int numHeight_enemies = 5; //Sets height of enemy
+    private int spacing_enemies = 40; //Keeps the enemies from being on top of one another
+    private int minX_enemies;
+    private int minY_enemies;
+    private int maxX_enemies;
+    private int maxY_enemies;
+    private int direction_enemies = 1;
+    private float speed_enemies = 200;
+    //Offset to move the enemies
+    private Vector2 offset_enemies;
 
     // Menu variables
     private Stage menuStage;
@@ -104,17 +109,34 @@ public class Core extends ApplicationAdapter {
         soundOff = new TextureRegionDrawable(new TextureRegion(soundOffTex));
         soundOffPressed = new TextureRegionDrawable(new TextureRegion(soundOffPressedTex));
 
+        offset_enemies = new Vector2(0,0);
         batch = new SpriteBatch();
         img_lifeguard = new Texture("LifeguardShootingUp.png"); //loads lifeguad image
         img_bullet = new Texture("Bullet.png"); //loads bullet image
         img_enemy = new Texture("Fish.png");
         img_background = new Texture("Background.png");
-        lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE); //creates lifeguard + bullet, bullet color is blue
+        lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE, bullet_sound); //creates lifeguard + bullet, bullet color is blue
+        enemies = new Enemy[numWidth_enemies * numHeight_enemies]; //creates enemies based on height and width params
 
-        // Changed to enemy manager to modularize
-        enemyManager = new EnemyManager(img_enemy);
-        // Initialize enemy formation with level 1
-        enemyManager.createFormation(currentLevel);
+        //give space from top of screen for enemy
+        float topMargin = 40f;
+
+        //start position of enemies for x and y coordinates to center
+        float startX = Gdx.graphics.getWidth()/2f - (numWidth_enemies/2f) * spacing_enemies;
+        float startY = Gdx.graphics.getHeight() - topMargin - (numHeight_enemies - 1) * spacing_enemies;
+        int i = 0;
+
+        //Nested for loop to generate enemies
+        for(int y = 0; y < numHeight_enemies; y++){
+            for(int x = 0; x < numWidth_enemies; x++){
+
+                //position & create the enemies
+                Vector2 position = new Vector2(startX + x * spacing_enemies,
+                    startY + (numHeight_enemies - 1 - y) * spacing_enemies);
+                                 enemies[i] = new Enemy(position, img_enemy);
+                i++;
+            }
+        }
 
         // Jimi - I'd recommend moving all the Game Over Screen code to its own function and calling it from right here instead of having
         // all the code inside create(). This will give us more organization and cleaner code.
@@ -189,6 +211,7 @@ public class Core extends ApplicationAdapter {
         gameOverStage.addActor(goTable);
     }
 
+    int amount_alive_enemies = 0;
     @Override
     public void render() {
 
@@ -197,49 +220,107 @@ public class Core extends ApplicationAdapter {
 
             menuStage.act(Gdx.graphics.getDeltaTime());
             menuStage.draw();
-        } else {
-            //
-            float deltaTime = Gdx.graphics.getDeltaTime();
 
-            // Move the enemies
-            enemyManager.updateEnemyPosition();
-
-            ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-            batch.begin();
-            batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-            lifeguard.Draw(batch);
-
-            // Detect bullet hitting enemy
-            enemyManager.enemyHit(lifeguard);
-
-            // Bounds checking for current state of enemy formation
-            enemyManager.updateEnemyBounds();
-
-
-            // Regenerates enemies when all are destroyed
-            if (enemyManager.allDead()) {
-                enemyManager.createFormation(++currentLevel);
-
-                batch.end();
-                return;
+            if (showGameOver) {
+                gameOverStage.act(Gdx.graphics.getDeltaTime());
+                gameOverStage.draw();
+                return; // skip running the game while Game Over is showing
             }
 
-            //Bounds checking to ensure enemies do not exit the RIGHT or LEFT side of the screen
-            enemyManager.enemyBoundsCheck();
+            // If the game is running and not paused, the gameplay will run.
+            if (running && !paused) {
 
-            // Draw enemies still alive
-            enemyManager.drawBatch(batch);
+                //If the menu is not showing, the gameplay will run.
+                if (!showingMenu) {
 
-            // If enemy touches the lifeguard or below player, show Game Over.
-            if (enemyManager.playerCollision(lifeguard) || enemyManager.enemyPastPlayer()) {
-                triggerGameOver();
-                batch.end();   // Batch was begun earlier
-                return;        // Stop the rest of render() for this frame
-            }
+                    float deltaTime = Gdx.graphics.getDeltaTime();
+                    //Moves the enemies
+                    offset_enemies.x += direction_enemies * deltaTime * speed_enemies;
+                    //This block makes the enemies move
+                    for (int i = 0; i < enemies.length; i++) {
+                        enemies[i].position.set(
+                            enemies[i].position_initial.x + offset_enemies.x,
+                            enemies[i].position_initial.y + offset_enemies.y
+                        );
+                    }
+                    ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
+                    batch.begin();
+                    batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+                    lifeguard.Draw(batch);
+                    for (int i = 0; i < enemies.length; i++) {
+                        //Check to see if bullet overlaps with enemy. If so, enemy "dies" (gets deleted from screen).
+                        //Must check if they are alive first, or bullet will stop at first level.
+                        if (enemies[i].alive) {
+                            if (lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())) {
+                                enemy_death.play();
+                                lifeguard.position_bullet.y = 100000;
+                                enemies[i].alive = false;
+                                break;
+                            }
+                        }
+                    }
 
-            batch.end();
-        }
-    }
+                    //Variables for enemy movement
+                    amount_alive_enemies = 0;
+                    boolean seeded = false;
+                    for (int i = 0; i < enemies.length; i++) {
+                        if (enemies[i].alive) {
+                            int indexX = i % numWidth_enemies; //Columns
+                            int indexY = i / numWidth_enemies; //Rows
+
+                            if (!seeded) {
+
+                                // seed min/max with the first alive enemy
+                                minX_enemies = maxX_enemies = minY_enemies = maxY_enemies = i;
+                                seeded = true;
+                            } else {
+                                if (indexX > maxX_enemies) maxX_enemies = i;
+                                if (indexX < minX_enemies) minX_enemies = i;
+                                if (indexY > maxY_enemies) maxY_enemies = i;
+                                if (indexY < minY_enemies) minY_enemies = i;
+                            }
+
+                            amount_alive_enemies++;
+                        }
+                    }
+
+                    //Regenerates enemies when all are destroyed
+                    if (amount_alive_enemies == 0) {
+                        for (int i = 0; i < enemies.length; i++) {
+                            enemies[i].alive = true;
+                        }
+                        offset_enemies = new Vector2(0, 0);
+                        batch.end();
+                        return;
+                    }
+
+                    //Bounds checking to ensure enemies do not exit the RIGHT side of the screen
+                    float rightLimit = Gdx.graphics.getWidth() - enemies[0].enemy_sprite.getWidth();
+                    if (enemies[maxX_enemies].position.x >= rightLimit) {
+                        direction_enemies = -1;
+                        //Makes the enemies go down towards the lifeguard
+                        offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
+                        //Makes the speed of the enemies increase over time.
+                        speed_enemies += 0.1f;
+                    }
+
+                    //Bounds checking to ensure enemies do not exit the LEFT side of the screen
+                    if (enemies[minX_enemies].position.x <= 0f) {
+                        direction_enemies = 1;
+                        //Makes the enemies go down towards the lifeguard
+                        offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
+                        //Makes the speed of the enemies increase over time.
+                        speed_enemies += 0.1f;
+                    }
+
+                    //If enemies go past bottom of the screen, exit the app.
+                    //We need to update this so that it shows "game over" and score achived. If score > highscore, update highscore.
+                    // If enemies go past bottom of the screen, exit the app.
+                    if (enemies[minY_enemies].position.y <= 0) {
+                        triggerGameOver();
+                        batch.end(); // we already called batch.begin() earlier this frame
+                        return; // stop the rest of render() for this frame;
+                    }
 
                     for (int i = 0; i < enemies.length; i++) {
                         if (enemies[i].alive) {
@@ -301,15 +382,21 @@ public class Core extends ApplicationAdapter {
     }
 
     private void resetGame(){
-        currentLevel = 1;
-        enemyManager.resetEnemies();
+        // Reset enemy movements
+        offset_enemies.set(0,0);
+        direction_enemies = 1;
+        speed_enemies = 200f;
 
         // Reset lifeguard batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());position and bullets:
         float startX = Gdx.graphics.getWidth() / 2f - lifeguard.lifeguard_sprite.getWidth() / 2f;
         lifeguard.position.set(startX, 6f);
         lifeguard.position_bullet.set(0f, 10000f);
 
-        enemyManager.createFormation(currentLevel);
+        // Get the enemies back to default amount and initlize positions
+        for (Enemy e: enemies) {
+            e.alive = true;
+            e.position.set(e.position_initial);
+        }
     }
 
     /**
