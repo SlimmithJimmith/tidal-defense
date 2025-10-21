@@ -13,11 +13,12 @@ public class Enemy {
     public Vector2 position_initial;
     public Sprite enemy_sprite;
     public Boolean alive = true;
+
     public Enemy(Vector2 position, Texture img) {
         this.position = new Vector2(position);
         position_initial = new Vector2(position);
         enemy_sprite = new Sprite(img);
-        enemy_sprite.setSize(32,32); //Adjust to change size of the lifeguard
+        enemy_sprite.setSize(32,32); //Adjust to change size of the enemy
     }
 
     public void Draw(SpriteBatch batch){
