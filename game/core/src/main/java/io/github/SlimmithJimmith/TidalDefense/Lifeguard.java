@@ -2,6 +2,7 @@ package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -16,9 +17,10 @@ public class Lifeguard {
     private float speed = 300;
     private float speed_bullet = 1000;
     private float gunAnchor_X = 0.52f; //0.0 is the left edge of sprite, 1.0 is right edge. This will be almost center
-    private float gunAnchor_Y = 0.90f; //0.0 is the bottom of sprite, 1.0 is the top. This will make bullet come out top
+    private float gunAnchor_Y = 0.90f;//0.0 is the bottom of sprite, 1.0 is the top. This will make bullet come out top
+    private final Sound shootSound;
 
-    public Lifeguard(Texture img, Texture img_bullet, Color color){
+    public Lifeguard(Texture img, Texture img_bullet, Color color, Sound sound){
         lifeguard_sprite = new Sprite(img); //Lifeguard sprite
         lifeguard_sprite.setSize(64,64); //Adjust to change size of the lifeguard
         float startX = Gdx.graphics.getWidth()/2f - lifeguard_sprite.getWidth()/2f; //Centers lifeguard on x axis
@@ -28,6 +30,7 @@ public class Lifeguard {
         bullet_sprite.setSize(20,16); //Adjust to change size of the bullets
         bullet_sprite.setColor(color); //ability to change color of bullet in main
         position_bullet = new Vector2(0,10000); //Position of the bullet
+        this.shootSound = sound;
     }
 
     public void Update(float deltaTime){
@@ -37,6 +40,8 @@ public class Lifeguard {
 
             position_bullet.x = gunX - bullet_sprite.getWidth() / 2f;
             position_bullet.y = gunY;
+
+            if (shootSound != null) shootSound.play();
         }
         //Press "A", lifeguard moves LEFT
         if(Gdx.input.isKeyPressed(Input.Keys.A)) position.x-= deltaTime*speed;
