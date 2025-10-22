@@ -89,10 +89,10 @@ public class Core extends ApplicationAdapter {
         }
 
         // Load the image files for each button case
-        soundOnTex = new Texture(Gdx.files.internal("button/music-on.png"));
-        soundOnPressedTex = new Texture(Gdx.files.internal("button/music-on-pressed.png"));
-        soundOffTex = new Texture(Gdx.files.internal("button/music-off.png"));
-        soundOffPressedTex = new Texture(Gdx.files.internal("button/music-off-pressed.png"));
+        soundOnTex = new Texture(Gdx.files.internal("button/music-on-btn-up.png"));
+        soundOnPressedTex = new Texture(Gdx.files.internal("button/music-on-btn-down.png"));
+        soundOffTex = new Texture(Gdx.files.internal("button/music-off-btn-up.png"));
+        soundOffPressedTex = new Texture(Gdx.files.internal("button/music-off-btn-down.png"));
 
         // Wrap each texture into a TextureRegionDrawable
         // We did this since Scene2D buttons only understand drawables, not raw textures.
@@ -105,7 +105,7 @@ public class Core extends ApplicationAdapter {
         img_lifeguard = new Texture("LifeguardShootingUp.png"); //loads lifeguad image
         img_bullet = new Texture("Bullet.png"); //loads bullet image
         img_enemy = new Texture("Fish.png");
-        img_background = new Texture("Background.png");
+        img_background = new Texture("background-2.png");
         lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE, bullet_sound); //creates lifeguard + bullet, bullet color is blue
 
         // Changed to enemy manager to modularize
@@ -119,9 +119,9 @@ public class Core extends ApplicationAdapter {
         // Game Over Screen:
         gameOverStage = new Stage(new ScreenViewport());
         // Reuse the helper to make buttons:
-        ImageButton playAgainBtn = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
-        ImageButton quitBtnGo = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
-        ImageButton returnMenuBtn = makeButton("button/return-button.png", "button/return-pressed-button.png");
+        ImageButton playAgainBtn = makeButton("button/play-btn-up.png", "button/play-btn-down.png");
+        ImageButton quitBtnGo = makeButton("button/quit-btn-up.png", "button/quit-btn-down.png");
+        ImageButton returnMenuBtn = makeButton("button/return-btn-up.png", "button/return-btn-down.png");
 
         // Functions when user click them:
         playAgainBtn.addListener(new ClickListener() {
@@ -179,9 +179,9 @@ public class Core extends ApplicationAdapter {
         goTable.top().center(); // top center the content
         goTable.add(titleImg).padTop(20).padBottom(10).row(); // add some spacing above/below title
 
-        goTable.add(playAgainBtn).width(200).height(80).pad(10).row();
-        goTable.add(quitBtnGo).width(200).height(80).pad(10).row();
-        goTable.add(returnMenuBtn).width(200).height(80).pad(10).row();
+        goTable.add(playAgainBtn).width(300).height(80).row();
+        goTable.add(quitBtnGo).width(300).height(80).row();
+        goTable.add(returnMenuBtn).width(300).height(80).padBottom(60).row();
 
         gameOverStage.addActor(goTable);
     }
@@ -308,7 +308,7 @@ public class Core extends ApplicationAdapter {
         // Clear any existing tables.
         clearTables();
 
-        ImageButton playButton = makeButton("button/play-button-1.png", "button/play-pressed-button-1.png");
+        ImageButton playButton = makeButton("button/play-btn-up.png", "button/play-btn-down.png");
 
         // Listener listens for the click on the button.
         playButton.addListener(new ClickListener() {
@@ -322,7 +322,7 @@ public class Core extends ApplicationAdapter {
             }
         });
 
-        ImageButton quitButton = makeButton("button/quit-button-1.png", "button/quit-pressed-button-1.png");
+        ImageButton quitButton = makeButton("button/quit-btn-up.png", "button/quit-btn-down.png");
         quitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -331,7 +331,7 @@ public class Core extends ApplicationAdapter {
             }
         });
 
-        ImageButton settingsButton = makeButton("button/settings-button-1.png", "button/settings-pressed-button-1.png");
+        ImageButton settingsButton = makeButton("button/settings-btn-up.png", "button/settings-btn-down.png");
         settingsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -343,7 +343,7 @@ public class Core extends ApplicationAdapter {
         });
 
         // Don't have a listener for this button at this time.
-        ImageButton leaderboardButton = makeButton("button/leaderboard-button-1.png", "button/leaderboard-pressed-button-1.png");
+        ImageButton leaderboardButton = makeButton("button/lead-btn-up.png", "button/lead-btn-down.png");
 
         // Build the table of buttons.
         mainMenuTable = new Table();
@@ -351,10 +351,10 @@ public class Core extends ApplicationAdapter {
         mainMenuTable.center();
 
         // Add the buttons to the table.
-        mainMenuTable.add(playButton).width(200).height(80).pad(10).row();
-        mainMenuTable.add(quitButton).width(200).height(80).pad(10).row();
-        mainMenuTable.add(settingsButton).width(200).height(80).pad(10).row();
-        mainMenuTable.add(leaderboardButton).width(200).height(80).pad(10).row();
+        mainMenuTable.add(playButton).width(300).height(80).row();
+        mainMenuTable.add(quitButton).width(300).height(80).row();
+        mainMenuTable.add(settingsButton).width(300).height(80).row();
+        mainMenuTable.add(leaderboardButton).width(300).height(80).row();
 
         //Add the actor (button) to the stage.
         menuStage.addActor(mainMenuTable);
@@ -373,7 +373,7 @@ public class Core extends ApplicationAdapter {
         menuStage.clear();
 
         // Build the buttons and their listeners. (Only 1 right now :) )
-        ImageButton backButton = makeButton("button/back-button.png", "button/back-pressed-button.png");
+        ImageButton backButton = makeButton("button/back-btn-up.png", "button/back-btn-down.png");
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -422,8 +422,8 @@ public class Core extends ApplicationAdapter {
         settingsTable.center();
 
         // Add the button to the table. (Music toggle first,then Back)
-        settingsTable.add(musicBtn).width(200).height(80).pad(10).row();
-        settingsTable.add(backButton).width(200).height(80).pad(10).row();
+        settingsTable.add(musicBtn).width(300).height(80).row();
+        settingsTable.add(backButton).width(300).height(80).row();
 
         // Add the actor (button) to the stage.
         menuStage.addActor(settingsTable);
