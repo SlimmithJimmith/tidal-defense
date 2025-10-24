@@ -30,8 +30,9 @@ public class Core extends ApplicationAdapter {
     private SpriteBatch batch;
     private Texture img_lifeguard;
     private Texture img_bullet;
-    private Texture img_enemy;
+    private Texture img_fish;
     private Texture img_background;
+    private Texture img_shark;
     Lifeguard lifeguard; //Instantiate lifeguard object
 
     // Enemy setup
@@ -104,12 +105,14 @@ public class Core extends ApplicationAdapter {
         batch = new SpriteBatch();
         img_lifeguard = new Texture("LifeguardShootingUp.png"); //loads lifeguad image
         img_bullet = new Texture("Bullet.png"); //loads bullet image
-        img_enemy = new Texture("Fish.png");
+        img_fish = new Texture("Fish.png");
+        img_shark = new Texture("SharkUp.png");
         img_background = new Texture("background-2.png");
+
         lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE, bullet_sound); //creates lifeguard + bullet, bullet color is blue
 
         // Changed to enemy manager to modularize
-        enemyManager = new EnemyManager(img_enemy);
+        enemyManager = new EnemyManager(img_fish);
         // Initialize enemy formation with level 1
         enemyManager.createFormation(currentLevel);
 
@@ -463,7 +466,7 @@ public class Core extends ApplicationAdapter {
         //Dispose of sprites
         img_lifeguard.dispose();
         img_bullet.dispose();
-        img_enemy.dispose();
+        img_fish.dispose();
         img_background.dispose();
         if (gameOverTitleTex != null) gameOverTitleTex.dispose();
         if (gameOverStage != null) gameOverStage.dispose();

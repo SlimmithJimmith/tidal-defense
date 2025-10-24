@@ -149,6 +149,8 @@ public class EnemyManager {
         if (enemies[maxX_enemies].position.x >= rightLimit || enemies[minX_enemies].position.x <= 0f) {
             // Change directions
             direction_enemies *= -1;
+            // Move enemies one step inward to prevent 'falling'
+            this.updateEnemyPosition();
             // Makes the enemies go down towards the lifeguard
             offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
             // Makes the speed of the enemies increase over time

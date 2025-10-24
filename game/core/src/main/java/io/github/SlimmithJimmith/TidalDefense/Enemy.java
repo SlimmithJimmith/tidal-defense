@@ -17,7 +17,7 @@ public class Enemy {
         this.position = new Vector2(position);
         position_initial = new Vector2(position);
         enemy_sprite = new Sprite(img);
-        enemy_sprite.setSize(32,32); //Adjust to change size of the lifeguard
+        enemy_sprite.setSize(40,40); // Adjust to change size of the enemy
     }
 
     public void Draw(SpriteBatch batch){
