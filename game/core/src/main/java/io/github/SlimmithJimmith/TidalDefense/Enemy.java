@@ -1,30 +1,36 @@
+/**
+ * Enemy.java
+ * Abstract class for different enemy types to inherit
+ *
+ * @author Team #2 - Brendan Boyko, Jimi Ruble, Mehdi Khazaal, James Watson
+ * @version 1.0
+ * Create Date: 09-27-2025
+ */
+
 package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 
-public class Enemy {
+abstract class Enemy {
     public Vector2 position;
     public Vector2 position_initial;
     public Sprite enemy_sprite;
     public Boolean alive = true;
-    public Enemy(Vector2 position, Texture img) {
+    public int health;
+
+    public Enemy(Vector2 position) {
         this.position = new Vector2(position);
         position_initial = new Vector2(position);
-        enemy_sprite = new Sprite(img);
-        enemy_sprite.setSize(40,40); // Adjust to change size of the enemy
     }
 
     public void Draw(SpriteBatch batch){
         float maxX = Gdx.graphics.getWidth() - enemy_sprite.getWidth();
         float maxY = Gdx.graphics.getHeight() - enemy_sprite.getHeight();
 
-        //Stop enemy from going through left of screen
+        // Bounds checking
         if(position.x < 0f){
             position.x = 0f;
         }
@@ -43,4 +49,10 @@ public class Enemy {
         enemy_sprite.setPosition(position.x, position.y);
         enemy_sprite.draw(batch);
     }
+
+    public void takeDamage() {
+        this.health--;
+    }
+
+    // I think we might need to dispose of enemy sprite here...? or in subclasses
 }

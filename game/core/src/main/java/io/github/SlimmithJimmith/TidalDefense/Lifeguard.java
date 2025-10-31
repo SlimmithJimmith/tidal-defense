@@ -1,3 +1,12 @@
+/**
+ * Lifeguard.java
+ * Creates and performs actions for the player's character
+ *
+ * @author Team #2 - Brendan Boyko, Jimi Ruble, Mehdi Khazaal, James Watson
+ * @version 1.0
+ * Create Date: 09-27-2025
+ */
+
 package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.Gdx;
@@ -19,6 +28,7 @@ public class Lifeguard {
     private float gunAnchor_X = 0.52f; //0.0 is the left edge of sprite, 1.0 is right edge. This will be almost center
     private float gunAnchor_Y = 0.90f;//0.0 is the bottom of sprite, 1.0 is the top. This will make bullet come out top
     private final Sound shootSound;
+    private float volume = 0.5f;
 
     public Lifeguard(Texture img, Texture img_bullet, Color color, Sound sound) {
         lifeguard_sprite = new Sprite(img); // Lifeguard sprite
@@ -46,7 +56,7 @@ public class Lifeguard {
             position_bullet.y = gunY;
 
             // Sound effects toggle
-            if (shootSound != null) shootSound.play();
+            if (shootSound != null) shootSound.play(volume);
         }
 
         // Press "A" or left arrow, lifeguard moves LEFT

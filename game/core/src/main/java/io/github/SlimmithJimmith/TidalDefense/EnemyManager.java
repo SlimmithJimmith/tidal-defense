@@ -1,8 +1,17 @@
+/**
+ * EnemyManager.java
+ * Manages the different enemy arrays and their actions
+ *
+ * @author Team #2 - Brendan Boyko, Jimi Ruble, Mehdi Khazaal, James Watson
+ * @version 1.0
+ * Create Date: 09-27-2025
+ */
+
+
 package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 
@@ -13,55 +22,92 @@ public class EnemyManager {
 
     // Amount, speed and direction variables
     private int numWidth_enemies = 3; // Sets width of enemy formation
-    private int numHeight_enemies = 2; //Sets height of enemy formation
-    private int spacing_enemies = 40; // Keeps the enemies from being on top of one another
+    private int numHeight_enemies = 2; // Sets height of enemy formation
+    private int spacing_enemies; // Keeps the enemies from being on top of one another
     private int minX_enemies, minY_enemies, maxX_enemies, maxY_enemies; // Bounds checking
     private int direction_enemies = 1; // Toggles for left/right movement
     private float speed_enemies = 200;
     private Vector2 offset_enemies; // Offset to move the enemies
+    public float volume = 0.5f;
 
     private int amount_alive_enemies;
 
-    // Enemy images
-    private Texture img_enemy1;
-
-    public EnemyManager(Texture enemy1) {
-        this.img_enemy1 = enemy1;
+    public EnemyManager() {
         offset_enemies = new Vector2(0,0);
     }
 
+    /**
+     * The if/else are basically copies of each other.
+     * Switches to Sharks after level 3
+     * I had to break it out to adjust formation size and the spacing between Sprites
+     * Otherwise the sharks overlapped or had their heads above the screen when created
+     * @param level - The formation iteration the player is on
+     */
     // Enemy formation creation
     public void createFormation(int level) {
         offset_enemies = new Vector2(0, 0);
 
-        // Calculate enemy matrix size here, randomize...?
-        numWidth_enemies = numWidth_enemies + (level - 1);
-        numHeight_enemies = numHeight_enemies + (level - 1);
+        if (level <= 3) {
+            // Give space from top of screen for enemy
+            float topMargin = 40f;
 
-        // Creates enemy array with length based on height and width params
-        enemies = new Enemy[numWidth_enemies * numHeight_enemies];
+            // Space between enemies
+            spacing_enemies = 40;
 
-        // Give space from top of screen for enemy
-        float topMargin = 40f;
+            // Calculate enemy matrix size here, randomize...?
+            numWidth_enemies = numWidth_enemies + (level - 1);
+            numHeight_enemies = numHeight_enemies + (level - 1);
 
-        // Start position of enemies for x and y coordinates to center
-        float startX = Gdx.graphics.getWidth()/2f - (numWidth_enemies/2f) * spacing_enemies;
-        float startY = Gdx.graphics.getHeight() - topMargin - (numHeight_enemies - 1) * spacing_enemies;
+            // Creates enemy array with length based on height and width params
+            enemies = new Enemy[numWidth_enemies * numHeight_enemies];
 
-        int i = 0;
-        // Nested for loop to generate enemies
-        for(int y = 0; y < (numHeight_enemies); y++){
-            for(int x = 0; x < (numWidth_enemies); x++){
+            // Start position of enemies for x and y coordinates to center
+            float startX = Gdx.graphics.getWidth()/2f - (numWidth_enemies/2f) * spacing_enemies;
+            float startY = Gdx.graphics.getHeight() - topMargin - (numHeight_enemies - 1) * spacing_enemies;
 
-                //position & create the enemies
-                Vector2 position = new Vector2(startX + x * spacing_enemies,
-                    startY + (numHeight_enemies - 1 - y) * spacing_enemies);
-                enemies[i] = new Enemy(position, img_enemy1);
-                enemies[i].alive = true;
-                i++;
+            int i = 0;
+            // Nested for loop to generate enemies
+            for (int y = 0; y < (numHeight_enemies); y++) {
+                for (int x = 0; x < (numWidth_enemies); x++) {
+
+                    //position & create the enemies
+                    Vector2 position = new Vector2(startX + x * spacing_enemies,
+                        startY + (numHeight_enemies - 1 - y) * spacing_enemies);
+                    enemies[i] = new Fish(position);
+                    enemies[i].alive = true;
+                    i++;
+                }
+            }
+        } else {
+            // Give space from top of screen for enemy
+            float topMargin = 100f;
+
+            // Enemy matrix size and space between
+            numHeight_enemies = 1;
+            numWidth_enemies = 3;
+            spacing_enemies = 100;
+
+            // Creates enemy array with length based on height and width params
+            enemies = new Enemy[numWidth_enemies * numHeight_enemies];
+
+            // Start position of enemies for x and y coordinates to center
+            float startX = Gdx.graphics.getWidth()/2f - (numWidth_enemies/2f) * spacing_enemies;
+            float startY = Gdx.graphics.getHeight() - topMargin - (numHeight_enemies - 1) * spacing_enemies;
+
+            int i = 0;
+            // Nested for loop to generate enemies
+            for (int y = 0; y < (numHeight_enemies); y++) {
+                for (int x = 0; x < (numWidth_enemies); x++) {
+
+                    //position & create the enemies
+                    Vector2 position = new Vector2(startX + x * spacing_enemies,
+                        startY + (numHeight_enemies - 1 - y) * spacing_enemies);
+                    enemies[i] = new Shark(position);
+                    enemies[i].alive = true;
+                    i++;
+                }
             }
         }
-
     }
 
     // Detect enemy collision with player
@@ -135,8 +181,11 @@ public class EnemyManager {
             if (enemies[i].alive) {
                 if (lifeguard.bullet_sprite.getBoundingRectangle().overlaps(enemies[i].enemy_sprite.getBoundingRectangle())) {
                     lifeguard.position_bullet.y = 100000;
-                    enemies[i].alive = false;
-                    enemy_death.play();
+                    enemies[i].takeDamage(); // Reduce health
+                    enemy_death.play(volume);
+
+                    if (enemies[i].health <= 0) enemies[i].alive = false; // Destroy enemy if health is zero
+
                     break;
                 }
             }

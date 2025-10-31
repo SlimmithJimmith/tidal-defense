@@ -1,43 +1,44 @@
+/**
+ * Core.java
+ * Manages the program's gameplay and GUI
+ *
+ * @author Team #2 - Brendan Boyko, Jimi Ruble, Mehdi Khazaal, James Watson
+ * @version 1.0
+ * Create Date: 09-27-2025
+ */
+
 package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.utils.Scaling;
 
-//Test test test
+// Audio
+import com.badlogic.gdx.audio.*;
+
+// Graphics
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.*;
+
+// Scene2D
+import com.badlogic.gdx.scenes.scene2d.*;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.*;
+
+// Utils
+import com.badlogic.gdx.utils.*;
+import com.badlogic.gdx.utils.viewport.*;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Core extends ApplicationAdapter {
     private SpriteBatch batch;
     private Texture img_lifeguard;
     private Texture img_bullet;
-    private Texture img_fish;
     private Texture img_background;
-    private Texture img_shark;
     Lifeguard lifeguard; //Instantiate lifeguard object
 
     // Enemy setup
     EnemyManager enemyManager;
-    int currentLevel = 1;
+    int currentLevel = 4;
 
     // Menu variables
     private Stage menuStage;
@@ -53,6 +54,9 @@ public class Core extends ApplicationAdapter {
     private boolean showGameOver = false;
     private Texture gameOverTitleTex;
     private Texture gameOverBgTex;
+
+    // Overall volume
+    float volume = 0.7f;
 
     // Sound
     Sound bullet_sound;
@@ -86,6 +90,7 @@ public class Core extends ApplicationAdapter {
 
         // Play only if music is enabled
         if (musicEnabled) {
+            music.setVolume(volume);
             music.play();
         }
 
@@ -105,14 +110,12 @@ public class Core extends ApplicationAdapter {
         batch = new SpriteBatch();
         img_lifeguard = new Texture("LifeguardShootingUp.png"); //loads lifeguad image
         img_bullet = new Texture("Bullet.png"); //loads bullet image
-        img_fish = new Texture("Fish.png");
-        img_shark = new Texture("SharkUp.png");
         img_background = new Texture("background-2.png");
 
         lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE, bullet_sound); //creates lifeguard + bullet, bullet color is blue
 
         // Changed to enemy manager to modularize
-        enemyManager = new EnemyManager(img_fish);
+        enemyManager = new EnemyManager();
         // Initialize enemy formation with level 1
         enemyManager.createFormation(currentLevel);
 
@@ -133,14 +136,14 @@ public class Core extends ApplicationAdapter {
                resetGame();
                showGameOver = false;
                Gdx.input.setInputProcessor(null);
-               button_click_sound.play();
+               button_click_sound.play(volume);
            }
         });
 
         quitBtnGo.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play();
+                button_click_sound.play(volume);
                 Gdx.app.exit();
             }
         });
@@ -148,7 +151,7 @@ public class Core extends ApplicationAdapter {
         returnMenuBtn.addListener(new ClickListener() {
            @Override
             public void clicked(InputEvent event, float x, float y) {
-               button_click_sound.play();
+               button_click_sound.play(volume);
                resetGame();
 
                // flip screens
@@ -317,7 +320,7 @@ public class Core extends ApplicationAdapter {
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play();
+                button_click_sound.play(volume);
                 clearTables();
                 paused = false;         // Game is not paused.
                 running = true;         // Game is running.
@@ -329,7 +332,7 @@ public class Core extends ApplicationAdapter {
         quitButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play();
+                button_click_sound.play(volume);
                 Gdx.app.exit();     // Closes the application from the menu.
             }
         });
@@ -338,7 +341,7 @@ public class Core extends ApplicationAdapter {
         settingsButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play();
+                button_click_sound.play(volume);
                 System.out.println("Settings button clicked!");
                 paused = true;
                 settingsMenu();
@@ -380,7 +383,7 @@ public class Core extends ApplicationAdapter {
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play();
+                button_click_sound.play(volume);
                 mainMenu();
             }
         });
@@ -397,14 +400,17 @@ public class Core extends ApplicationAdapter {
         musicBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(); // click sound
+                button_click_sound.play(volume); // click sound
 
                 // Flip music state: if On then Off, and vice versa.
                 musicEnabled = !musicEnabled;
 
                 // If music is now enabled, start or resume playing it
                 if (musicEnabled) {
-                    if (!music.isPlaying()) music.play(); // Resume if it was paused
+                    if (!music.isPlaying()) {
+                        music.setVolume(volume);
+                        music.play(); // Resume if it was paused
+                    }
 
                     // Update the button icon to show (music:on)
                     musicBtn.getStyle().imageUp   = soundOn;
@@ -466,7 +472,6 @@ public class Core extends ApplicationAdapter {
         //Dispose of sprites
         img_lifeguard.dispose();
         img_bullet.dispose();
-        img_fish.dispose();
         img_background.dispose();
         if (gameOverTitleTex != null) gameOverTitleTex.dispose();
         if (gameOverStage != null) gameOverStage.dispose();
