@@ -38,7 +38,10 @@ public class Core extends ApplicationAdapter {
 
     // Enemy setup
     EnemyManager enemyManager;
-    int currentLevel = 4;
+    int currentLevel = 1;
+
+    //Scorekeeping
+    private int score = 0;
 
     // Menu variables
     private Stage menuStage;
@@ -73,12 +76,15 @@ public class Core extends ApplicationAdapter {
     // We need this so we can display the textures for Scene2D to the button
     private TextureRegionDrawable soundOn, soundOnPressed, soundOff, soundOffPressed;
 
+    //Leaderboard
+    private Leaderboard leaderboard;
+
+    //Heads up display of score and level
+    private Stage hudStage;
+    private Label scoreLabel;
+
     @Override
     public void create() {
-        menuStage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(menuStage);
-        mainMenu();
-
         // Sound
         bullet_sound = Gdx.audio.newSound(Gdx.files.internal("sounds/gun_shot.mp3"));
         button_click_sound = Gdx.audio.newSound(Gdx.files.internal("sounds/button_click.mp3"));
@@ -112,12 +118,31 @@ public class Core extends ApplicationAdapter {
         img_bullet = new Texture("Bullet.png"); //loads bullet image
         img_background = new Texture("background-2.png");
 
+        //Create menu
+        menuStage = new Stage(new ScreenViewport());
+        Gdx.input.setInputProcessor(menuStage);
+        mainMenu();
+
         lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE, bullet_sound); //creates lifeguard + bullet, bullet color is blue
 
         // Changed to enemy manager to modularize
         enemyManager = new EnemyManager();
         // Initialize enemy formation with level 1
         enemyManager.createFormation(currentLevel);
+
+        //Create and load leaderboard
+        leaderboard = new Leaderboard();
+        leaderboard.loadAll();
+
+        //Create heads up display
+        hudStage = new Stage(new ScreenViewport());
+        BitmapFont font = new BitmapFont();
+        Label.LabelStyle style = new Label.LabelStyle(font, Color.WHITE);
+        scoreLabel = new Label("Score: 0", style);
+
+        //Position of scoreboard
+        scoreLabel.setPosition(10, Gdx.graphics.getHeight() - 30);
+        hudStage.addActor(scoreLabel);
 
         // Jimi - I'd recommend moving all the Game Over Screen code to its own function and calling it from right here instead of having
         // all the code inside create(). This will give us more organization and cleaner code.
@@ -177,20 +202,76 @@ public class Core extends ApplicationAdapter {
         // keeping content at the top/center over the background
         goTable.top().center();
 
-        // Game Over title image
+        //Game Over title image
         gameOverTitleTex = new Texture("GameOver_Title.png"); // use .png (or your real extension)
         Image titleImg = new Image(new TextureRegionDrawable(new TextureRegion(gameOverTitleTex)));
         titleImg.setScaling(Scaling.fit); // keep aspect ratio
 
         goTable.top().center(); // top center the content
         goTable.add(titleImg).padTop(20).padBottom(10).row(); // add some spacing above/below title
+        
+        //Simple score form: Name + SAVE SCORE
+        Table scoreForm = new Table();
 
-        goTable.add(playAgainBtn).width(300).height(80).row();
-        goTable.add(quitBtnGo).width(300).height(80).row();
-        goTable.add(returnMenuBtn).width(300).height(80).padBottom(60).row();
+        //"Name:" label + text field
+        Label.LabelStyle lblStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
+        TextField.TextFieldStyle tfStyle = new TextField.TextFieldStyle();
+        tfStyle.font = new BitmapFont();
+        tfStyle.fontColor = Color.WHITE;
 
+        Label nameLabel = new Label("Name:", lblStyle);
+        final TextField nameField = new TextField("", tfStyle);
+        nameField.setMessageText("AAA");
+        nameField.setMaxLength(8); // arcade-style initials
+
+        scoreForm.add(nameLabel).pad(5).right();
+        scoreForm.add(nameField).width(160).pad(5).left();
+        scoreForm.row();
+
+        //JIMI please add save button here
+        //SAVE SCORE button using the art
+        final ImageButton saveBtn = makeButton(
+            "button/save-btn-up.png",
+            "button/save-btn-down.png"
+        );
+
+        //remove the extra text label—we want the art’s text only
+        scoreForm.add(saveBtn).colspan(2).width(300).height(80).padTop(8).center();
+        scoreForm.row();
+
+        // Click save then switch to the Leaderboard screen
+        saveBtn.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                String playerName = nameField.getText() == null ? "" : nameField.getText().trim();
+                if (playerName.isEmpty()) playerName = "AAA";
+
+                Scoreboard row = new Scoreboard(playerName, score, System.currentTimeMillis());
+                leaderboard.addScore(row);
+
+                //move to separate leaderboard screen (no other buttons on this screen)
+                showLeaderboardScreen();
+            }
+        });
+
+        nameField.addListener(new InputListener() {
+            @Override
+            public boolean keyDown(InputEvent event, int keycode) {
+                if (keycode == com.badlogic.gdx.Input.Keys.ENTER) {
+                    saveBtn.toggle(); //provides visual feedback
+                    saveBtn.toggle();
+                    saveBtn.fire(new InputEvent()); //triggers the click listener
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        goTable.add(scoreForm).padBottom(12).center();
+        goTable.row();
         gameOverStage.addActor(goTable);
     }
+
 
     @Override
     public void render() {
@@ -221,8 +302,14 @@ public class Core extends ApplicationAdapter {
                     batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
                     lifeguard.Draw(batch);
 
-                    // Detect bullet hitting enemy
-                    enemyManager.enemyHit(lifeguard, enemy_death);
+                    // Ask enemyManager if kill occurred and how many points it was worth
+                    int gained = enemyManager.enemyHit(lifeguard, enemy_death);
+
+                    //If a kill happened:
+                    if (gained > 0) {
+                        score += gained;
+                        scoreLabel.setText("Score: " + score); //display score to user
+                    }
 
                     // Bounds checking for current state of enemy formation
                     enemyManager.updateEnemyBounds();
@@ -249,6 +336,10 @@ public class Core extends ApplicationAdapter {
                     }
 
                     batch.end();
+
+                    //Draw heads up display
+                    hudStage.act(Gdx.graphics.getDeltaTime());
+                    hudStage.draw();
                 } // End if (!showingMenu)
             } // End if (running && !paused)
     } // End render()
@@ -295,6 +386,7 @@ public class Core extends ApplicationAdapter {
 
     private void resetGame(){
         currentLevel = 1;
+        score = 0; //Set the score back to 0 when game is reset.
         enemyManager.resetEnemies();
 
         // Reset lifeguard batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());position and bullets:
@@ -313,6 +405,11 @@ public class Core extends ApplicationAdapter {
     private void mainMenu(){
         // Clear any existing tables.
         clearTables();
+
+        menuStage.clear();
+        Image menuBg = new Image(new TextureRegionDrawable(new TextureRegion(img_background)));
+        menuBg.setFillParent(true);
+        menuStage.addActor(menuBg);
 
         ImageButton playButton = makeButton("button/play-btn-up.png", "button/play-btn-down.png");
 
@@ -481,6 +578,88 @@ public class Core extends ApplicationAdapter {
         if (soundOffTex != null)  soundOffTex.dispose();
         if (soundOffPressedTex != null) soundOffPressedTex.dispose();
         if (music != null) music.dispose();
+    }
+
+    //Build the leaderboard (simple: #, Name, Score)
+    private Table buildLeaderboardTable() {
+        Table t = new Table();
+        BitmapFont f = new BitmapFont();
+        Label.LabelStyle ls = new Label.LabelStyle(f, Color.WHITE);
+
+        //Header
+        t.add(new Label("#", ls)).pad(4);
+        t.add(new Label("Name", ls)).pad(4);
+        t.add(new Label("Score", ls)).pad(4);
+        t.row();
+
+        //Load & ensure sorted (score desc; tie: older first)
+        com.badlogic.gdx.utils.Array<Scoreboard> list = leaderboard.loadAll();
+        list.sort(new java.util.Comparator<Scoreboard>() {
+            @Override public int compare(Scoreboard a, Scoreboard b) {
+                if (a.score != b.score) return Integer.compare(b.score, a.score);
+                return Long.compare(a.when, b.when);
+            }
+        });
+
+        int count = Math.min(10, list.size);
+        for (int i = 0; i < count; i++) {
+            Scoreboard s = list.get(i);
+            t.add(new Label(String.valueOf(i + 1), ls)).pad(2);
+            t.add(new Label(s.name, ls)).pad(2);
+            t.add(new Label(String.valueOf(s.score), ls)).pad(2);
+            t.row();
+        }
+
+        return t;
+    }
+
+    //show leaderboard screen:
+    private void showLeaderboardScreen() {
+        //Clear previous Game Over UI
+        gameOverStage.clear();
+
+        Table t = new Table();
+        t.setFillParent(true);
+        t.top().center();
+
+        //Title
+        Label.LabelStyle titleStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
+        t.add(new Label("LEADERBOARD", titleStyle)).padTop(20).padBottom(10).row();
+
+        //Table of scores (just #, Name, Score)
+        Table lb = buildLeaderboardTable();
+        t.add(lb).padBottom(20).center().row();
+
+        //Nav buttons styled like the others
+        ImageButton playAgainBtn   = makeButton("button/play-btn-up.png",   "button/play-btn-down.png");
+        ImageButton returnMenuBtn  = makeButton("button/return-btn-up.png", "button/return-btn-down.png");
+
+        //Handlers
+        playAgainBtn.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent e, float x, float y) {
+                button_click_sound.play(volume);
+                resetGame();
+                showGameOver = false;              // leave Game Over
+                Gdx.input.setInputProcessor(null); // back to game input
+            }
+        });
+
+        returnMenuBtn.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent e, float x, float y) {
+                button_click_sound.play(volume);
+                resetGame();
+                showGameOver = false;
+                showingMenu = true;
+                mainMenu();
+            }
+        });
+
+        //Lay out the two buttons vertically
+        t.add(playAgainBtn).width(300).height(80).pad(6).row();
+        t.add(returnMenuBtn).width(300).height(80).pad(6).row();
+
+        gameOverStage.addActor(t);
+        //We are already in Game Over; input is already set to gameOverStage from triggerGameOver()
     }
 }
 
