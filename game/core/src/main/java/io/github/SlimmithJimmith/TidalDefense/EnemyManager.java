@@ -33,8 +33,8 @@ public class EnemyManager {
     private static final float SIDE_MARGIN_PX = 60f; // sets the side margin pixels
     // Base formation speed tuning
     private static final float BASE_SPEED = 180f;  //starting speed at level 1
-    private static final float LEVEL_SPEED_DELTA = 12f;   //+per level
-    private static final float MAX_LEVEL_BASE_SPEED = 360f;  //cap so it never feels unfair
+    private static final float LEVEL_SPEED_DELTA = 50f;   //+per level
+    private static final float MAX_LEVEL_BASE_SPEED = 1000f;  //cap so it never feels unfair
 
     private int amount_alive_enemies;
 
