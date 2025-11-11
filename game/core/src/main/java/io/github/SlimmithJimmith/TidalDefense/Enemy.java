@@ -54,5 +54,7 @@ abstract class Enemy {
         this.health--;
     }
 
+    abstract int getPoints();
+
     // I think we might need to dispose of enemy sprite here...? or in subclasses
 }

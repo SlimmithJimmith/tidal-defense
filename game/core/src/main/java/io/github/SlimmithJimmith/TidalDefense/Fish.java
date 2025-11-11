@@ -15,6 +15,10 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Fish extends Enemy {
 
+    //A constant variable that defines how many points a fish is worth when killed.
+    //Static because it is one value for each fish. Final because it never changes.
+    private static final int POINTS = 50;
+
     private Texture img_fish = new Texture("Fish.png");
 
     public Fish(Vector2 position) {
@@ -22,6 +26,12 @@ public class Fish extends Enemy {
         this.enemy_sprite = new Sprite(img_fish);
         this.enemy_sprite.setSize(40,40); // Adjust to change size of fish
         this.health = 1;
+    }
+
+    //Tells compiler that we are implementing abstract method declared in Enemy.
+    @Override
+    int getPoints() {
+        return POINTS; //Return this fish's points' value.
     }
 
 }
