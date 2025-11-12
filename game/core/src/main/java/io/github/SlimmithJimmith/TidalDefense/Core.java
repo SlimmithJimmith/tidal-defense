@@ -209,7 +209,7 @@ public class Core extends ApplicationAdapter {
 
         goTable.top().center(); // top center the content
         goTable.add(titleImg).padTop(20).padBottom(10).row(); // add some spacing above/below title
-        
+
         //Simple score form: Name + SAVE SCORE
         Table scoreForm = new Table();
 
@@ -474,6 +474,10 @@ public class Core extends ApplicationAdapter {
         // Clear any existing tables.
         clearTables();
         menuStage.clear();
+
+        Image menuBg = new Image(new TextureRegionDrawable(new TextureRegion(img_background)));
+        menuBg.setFillParent(true);
+        menuStage.addActor(menuBg);
 
         // Build the buttons and their listeners. (Only 1 right now :) )
         ImageButton backButton = makeButton("button/back-btn-up.png", "button/back-btn-down.png");
