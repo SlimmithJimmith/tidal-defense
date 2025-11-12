@@ -335,8 +335,6 @@ public class Core extends ApplicationAdapter {
         scoreForm.add(nameField).width(160).pad(5).left();
         scoreForm.row();
 
-        //JIMI please add save button here
-        //SAVE SCORE button using the art
         final ImageButton saveBtn = makeButton(
             "button/save-btn-up.png",
             "button/save-btn-down.png"
