@@ -52,11 +52,8 @@ public class Core extends ApplicationAdapter {
     private boolean paused = false;
     private boolean running = true;
 
-    // GameOver stage:
-    private Stage gameOverStage;
+    GameOver gameOver;
     private boolean showGameOver = false;
-    private Texture gameOverTitleTex;
-    private Texture gameOverBgTex;
 
     // Overall volume
     float volume = 0.7f;
@@ -134,6 +131,37 @@ public class Core extends ApplicationAdapter {
         leaderboard = new Leaderboard();
         leaderboard.loadAll();
 
+        // Build Game Over UI and wire callbacks
+        gameOver = new GameOver(leaderboard, button_click_sound, volume,
+            // onPlayAgain
+            new Runnable() {
+                @Override
+                public void run() {
+                    resetGame();
+                    showGameOver = false;
+                    Gdx.input.setInputProcessor(null); // back to game
+                }
+            },
+            // onQuit
+            new Runnable() {
+                @Override
+                public void run() {
+                    Gdx.app.exit();
+                }
+            },
+            // onReturnToMenu
+            new Runnable() {
+                @Override
+                public void run() {
+                    resetGame();
+                    showGameOver = false;
+                    showingMenu = true;
+                    mainMenu();
+                }
+            }
+        );
+
+
         //Create heads up display
         hudStage = new Stage(new ScreenViewport());
         BitmapFont font = new BitmapFont();
@@ -143,10 +171,6 @@ public class Core extends ApplicationAdapter {
         //Position of scoreboard
         scoreLabel.setPosition(10, Gdx.graphics.getHeight() - 30);
         hudStage.addActor(scoreLabel);
-
-        gameOverStage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(menuStage);
-        gameOverMenu();
     }
 
 
@@ -160,12 +184,11 @@ public class Core extends ApplicationAdapter {
             menuStage.draw();
 
             if (showGameOver) {
-                gameOverStage.act(Gdx.graphics.getDeltaTime());
-                gameOverStage.draw();
-                return; // skip running the game while Game Over is showing
+                gameOver.render(Gdx.graphics.getDeltaTime());
+                return;
             }
 
-            // If the game is running and not paused, the gameplay will run.
+        // If the game is running and not paused, the gameplay will run.
             if (running && !paused) {
 
                 //If the menu is not showing, the gameplay will run.
@@ -255,131 +278,18 @@ public class Core extends ApplicationAdapter {
         }
     }
 
-    public void gameOverMenu(){
-        // Game Over Screen:
-        gameOverStage = new Stage(new ScreenViewport());
-        // Reuse the helper to make buttons:
-        ImageButton playAgainBtn = makeButton("button/play-btn-up.png", "button/play-btn-down.png");
-        ImageButton quitBtnGo = makeButton("button/quit-btn-up.png", "button/quit-btn-down.png");
-        ImageButton returnMenuBtn = makeButton("button/return-btn-up.png", "button/return-btn-down.png");
-
-        // Functions when user click them:
-        playAgainBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                resetGame();
-                showGameOver = false;
-                Gdx.input.setInputProcessor(null);
-                button_click_sound.play(volume);
-            }
-        });
-
-        quitBtnGo.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume);
-                Gdx.app.exit();
-            }
-        });
-
-        returnMenuBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume);
-                resetGame();
-
-                // flip screens
-                showGameOver = false;
-                showingMenu = true;
-
-                // in case it was disposed when we hit Play
-                mainMenu();
-            }
-
-        });
-
-        // Organizing the buttons:
-        Table goTable = new Table();
-        goTable.setFillParent(true);
-        // Background image for Game Over
-        gameOverBgTex = new Texture("GameOver_Bg.png");
-        gameOverBgTex.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear); // smoother scaling
-        goTable.setBackground(new TextureRegionDrawable(new TextureRegion(gameOverBgTex)));
-
-        // keeping content at the top/center over the background
-        goTable.top().center();
-
-        //Game Over title image
-        gameOverTitleTex = new Texture("GameOver_Title.png"); // use .png (or your real extension)
-        Image titleImg = new Image(new TextureRegionDrawable(new TextureRegion(gameOverTitleTex)));
-        titleImg.setScaling(Scaling.fit); // keep aspect ratio
-
-        goTable.top().center(); // top center the content
-        goTable.add(titleImg).padTop(20).padBottom(10).row(); // add some spacing above/below title
-
-        //Simple score form: Name + SAVE SCORE
-        Table scoreForm = new Table();
-
-        //"Name:" label + text field
-        Label.LabelStyle lblStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
-        TextField.TextFieldStyle tfStyle = new TextField.TextFieldStyle();
-        tfStyle.font = new BitmapFont();
-        tfStyle.fontColor = Color.WHITE;
-
-        Label nameLabel = new Label("Name:", lblStyle);
-        final TextField nameField = new TextField("", tfStyle);
-        nameField.setMessageText("AAA");
-        nameField.setMaxLength(8); // arcade-style initials
-
-        scoreForm.add(nameLabel).pad(5).right();
-        scoreForm.add(nameField).width(160).pad(5).left();
-        scoreForm.row();
-
-        final ImageButton saveBtn = makeButton(
-            "button/save-btn-up.png",
-            "button/save-btn-down.png"
-        );
-
-        //remove the extra text label—we want the art’s text only
-        scoreForm.add(saveBtn).colspan(2).width(300).height(80).padTop(8).center();
-        scoreForm.row();
-
-        // Click save then switch to the Leaderboard screen
-        saveBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                String playerName = nameField.getText() == null ? "" : nameField.getText().trim();
-                if (playerName.isEmpty()) playerName = "AAA";
-
-                Scoreboard row = new Scoreboard(playerName, score, System.currentTimeMillis());
-                leaderboard.addScore(row);
-
-                //move to separate leaderboard screen (no other buttons on this screen)
-                showLeaderboardScreen();
-            }
-        });
-
-        nameField.addListener(new InputListener() {
-            @Override
-            public boolean keyDown(InputEvent event, int keycode) {
-                if (keycode == com.badlogic.gdx.Input.Keys.ENTER) {
-                    saveBtn.toggle(); //provides visual feedback
-                    saveBtn.toggle();
-                    saveBtn.fire(new InputEvent()); //triggers the click listener
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        goTable.add(scoreForm).padBottom(12).center();
-        goTable.row();
-        gameOverStage.addActor(goTable);
-    }
-    // Helper methods for GameOver screen:
-    private void triggerGameOver(){
+    private void triggerGameOver() {
+        // Tell the game that we are now in the "game over" state
         showGameOver = true;
-        Gdx.input.setInputProcessor(gameOverStage);
+
+        // update the score that GameOver will save
+        gameOver.setScore(score);
+
+        // rebuild the Game Over UI EVERY time the player lose
+        gameOver.resetToGameOverScreen();
+
+        // Switch input control to the GameOver stage, so the player can click the Game Over buttons
+        gameOver.show();
     }
 
     private void resetGame(){
@@ -572,7 +482,7 @@ public class Core extends ApplicationAdapter {
         //I have this commented out since the game is not resizable at this time, the buttons don't need to be either.
         //menuStage.getViewport().update(width, height, true);
         if (menuStage != null)     menuStage.getViewport().update(width, height, true);
-        if (gameOverStage != null) gameOverStage.getViewport().update(width, height, true);
+        if (gameOver != null)    gameOver.resize(width, height);
     }
 
     @Override
@@ -582,96 +492,12 @@ public class Core extends ApplicationAdapter {
         img_lifeguard.dispose();
         img_bullet.dispose();
         img_background.dispose();
-        if (gameOverTitleTex != null) gameOverTitleTex.dispose();
-        if (gameOverStage != null) gameOverStage.dispose();
-        if (gameOverBgTex != null) gameOverBgTex.dispose();
+        if (gameOver != null) gameOver.dispose();
         if (soundOnTex != null)  soundOnTex.dispose();
         if (soundOnPressedTex != null) soundOnPressedTex.dispose();
         if (soundOffTex != null)  soundOffTex.dispose();
         if (soundOffPressedTex != null) soundOffPressedTex.dispose();
         if (music != null) music.dispose();
-    }
-
-    //Build the leaderboard (simple: #, Name, Score)
-    private Table buildLeaderboardTable() {
-        Table t = new Table();
-        BitmapFont f = new BitmapFont();
-        Label.LabelStyle ls = new Label.LabelStyle(f, Color.WHITE);
-
-        //Header
-        t.add(new Label("#", ls)).pad(4);
-        t.add(new Label("Name", ls)).pad(4);
-        t.add(new Label("Score", ls)).pad(4);
-        t.row();
-
-        //Load & ensure sorted (score desc; tie: older first)
-        com.badlogic.gdx.utils.Array<Scoreboard> list = leaderboard.loadAll();
-        list.sort(new java.util.Comparator<Scoreboard>() {
-            @Override public int compare(Scoreboard a, Scoreboard b) {
-                if (a.score != b.score) return Integer.compare(b.score, a.score);
-                return Long.compare(a.when, b.when);
-            }
-        });
-
-        int count = Math.min(10, list.size);
-        for (int i = 0; i < count; i++) {
-            Scoreboard s = list.get(i);
-            t.add(new Label(String.valueOf(i + 1), ls)).pad(2);
-            t.add(new Label(s.name, ls)).pad(2);
-            t.add(new Label(String.valueOf(s.score), ls)).pad(2);
-            t.row();
-        }
-
-        return t;
-    }
-
-    //show leaderboard screen:
-    private void showLeaderboardScreen() {
-        //Clear previous Game Over UI
-        gameOverStage.clear();
-
-        Table t = new Table();
-        t.setFillParent(true);
-        t.top().center();
-
-        //Title
-        Label.LabelStyle titleStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
-        t.add(new Label("LEADERBOARD", titleStyle)).padTop(20).padBottom(10).row();
-
-        //Table of scores (just #, Name, Score)
-        Table lb = buildLeaderboardTable();
-        t.add(lb).padBottom(20).center().row();
-
-        //Nav buttons styled like the others
-        ImageButton playAgainBtn   = makeButton("button/play-btn-up.png",   "button/play-btn-down.png");
-        ImageButton returnMenuBtn  = makeButton("button/return-btn-up.png", "button/return-btn-down.png");
-
-        //Handlers
-        playAgainBtn.addListener(new ClickListener() {
-            @Override public void clicked(InputEvent e, float x, float y) {
-                button_click_sound.play(volume);
-                resetGame();
-                showGameOver = false;              // leave Game Over
-                Gdx.input.setInputProcessor(null); // back to game input
-            }
-        });
-
-        returnMenuBtn.addListener(new ClickListener() {
-            @Override public void clicked(InputEvent e, float x, float y) {
-                button_click_sound.play(volume);
-                resetGame();
-                showGameOver = false;
-                showingMenu = true;
-                mainMenu();
-            }
-        });
-
-        //Lay out the two buttons vertically
-        t.add(playAgainBtn).width(300).height(80).pad(6).row();
-        t.add(returnMenuBtn).width(300).height(80).pad(6).row();
-
-        gameOverStage.addActor(t);
-        //We are already in Game Over; input is already set to gameOverStage from triggerGameOver()
     }
 }
 
