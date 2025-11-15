@@ -43,10 +43,6 @@ public class EnemyManager {
     }
 
     /**
-     * The if/else are basically copies of each other.
-     * Switches to Sharks after level 3
-     * I had to break it out to adjust formation size and the spacing between Sprites
-     * Otherwise the sharks overlapped or had their heads above the screen when created
      * @param level - The formation iteration the player is on
      */
     // Enemy formation creation
@@ -89,7 +85,7 @@ public class EnemyManager {
                         startY + (numHeight_enemies - 1 - y) * spacing_enemies);
                     int rowFromTop = y; //y=0 is top row in loop
                     int totalRows  = numHeight_enemies;
-                    enemies[i] = makeEnemyForLevel(level, rowFromTop, totalRows, position);
+                    enemies[i] = getEnemyType(level, rowFromTop, totalRows, position);
                     enemies[i].alive = true;
                     i++;
                 }
@@ -127,7 +123,7 @@ public class EnemyManager {
                         startY + (numHeight_enemies - 1 - y) * spacing_enemies);
                     int rowFromTop = y; //y=0 is top row in loop
                     int totalRows  = numHeight_enemies;
-                    enemies[i] = makeEnemyForLevel(level, rowFromTop, totalRows, position);
+                    enemies[i] = getEnemyType(level, rowFromTop, totalRows, position);
                     enemies[i].alive = true;
                     i++;
                 }
@@ -136,15 +132,13 @@ public class EnemyManager {
     }
 
     //Make enemies for each level
-    private Enemy makeEnemyForLevel(int level, int rowFromTop, int totalRows, Vector2 position) {
+    private Enemy getEnemyType(int level, int rowFromTop, int totalRows, Vector2 position) {
         // Levels 1–3: only Fish (no sharks)
         if (level <= 3) {
             return new Fish(position);
         }
-        //Base shark chance: grows with level, capped lower so we rely on row bias
+        //Base shark chance: grows with level, capped lower, so we rely on row bias
         float sharkChance = getSharkChance(level, rowFromTop, totalRows);
-
-
         boolean spawnShark = MathUtils.randomBoolean(sharkChance);
         return spawnShark ? new Shark(position) : new Fish(position);
     }
@@ -161,7 +155,6 @@ public class EnemyManager {
         float sharkChance = baseChance * (0.30f + 0.70f * rowWeight);
         return sharkChance;
     }
-
 
     // Detect enemy collision with player
     public boolean playerCollision(Lifeguard lifeguard) {
@@ -260,8 +253,6 @@ public class EnemyManager {
             this.updateEnemyPosition();
             // Makes the enemies go down towards the lifeguard
             offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
-            // Makes the speed of the enemies increase over time
-            speed_enemies += 0.1f;
         }
     }
 

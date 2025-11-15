@@ -27,6 +27,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.*;
 // Utils
 import com.badlogic.gdx.utils.*;
 import com.badlogic.gdx.utils.viewport.*;
+import org.w3c.dom.Text;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Core extends ApplicationAdapter {
@@ -35,6 +36,8 @@ public class Core extends ApplicationAdapter {
     private Texture img_bullet;
     private Texture img_background;
     Lifeguard lifeguard; //Instantiate lifeguard object
+    PowerUp powerUp; // Instantiate power up object
+    boolean powerUpReady = true;
 
     // Enemy setup
     EnemyManager enemyManager;
@@ -202,14 +205,11 @@ public class Core extends ApplicationAdapter {
                     batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
                     lifeguard.Draw(batch);
 
-                    // Ask enemyManager if kill occurred and how many points it was worth
-                    int gained = enemyManager.enemyHit(lifeguard, enemy_death);
+                    // Check if power up received
 
-                    //If a kill happened:
-                    if (gained > 0) {
-                        score += gained;
-                        scoreLabel.setText("Score: " + score); //display score to user
-                    }
+                    // enemyManager returns zero or num points of enemy killed
+                    score += enemyManager.enemyHit(lifeguard, enemy_death);
+                    scoreLabel.setText("Level: " + currentLevel + " Score: " + score); //display score to user
 
                     // Bounds checking for current state of enemy formation
                     enemyManager.updateEnemyBounds();
@@ -218,11 +218,36 @@ public class Core extends ApplicationAdapter {
                     if (enemyManager.allDead()) {
                         enemyManager.createFormation(++currentLevel);
 
+                        // every 3 levels, create power up if not already created
+                        if (powerUpReady && (currentLevel - 1) % 3 == 0) {
+                            powerUp = new PowerUp();
+                            powerUpReady = false;
+                        }
+                        // reset power up readiness for next time
+                        if ((currentLevel - 1) % 3 != 0) {
+                            powerUpReady = true;
+                        }
                         batch.end();
                         return;
                     }
 
-                    //Bounds checking to ensure enemies do not exit the RIGHT or LEFT side of the screen
+                    // Move the power up if it is active
+                    if (powerUp != null) {
+                        // Check for power up being picked up
+                        if (powerUp.playerCollision(lifeguard)) {
+                            lifeguard.PowerUp();
+                            powerUp.dispose();
+                            powerUp = null;
+                        } else if (powerUp.powerUpPastPlayer()) { // Player missed it
+                            powerUp.dispose();
+                            powerUp = null;
+                        } else {
+                            powerUp.updatePowerUpPosition();
+                            powerUp.Draw(batch);
+                        }
+                    }
+
+                    // Bounds checking to ensure enemies do not exit the RIGHT or LEFT side of the screen
                     enemyManager.enemyBoundsCheck();
 
                     // Draw enemies still alive
@@ -296,6 +321,7 @@ public class Core extends ApplicationAdapter {
         currentLevel = 1;
         score = 0; //Set the score back to 0 when game is reset.
         enemyManager.resetEnemies();
+        lifeguard.ResetBullet();
 
         // Reset lifeguard batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());position and bullets:
         float startX = Gdx.graphics.getWidth() / 2f - lifeguard.lifeguard_sprite.getWidth() / 2f;

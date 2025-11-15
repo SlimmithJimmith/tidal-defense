@@ -23,12 +23,13 @@ public class Lifeguard {
     public Vector2 position_bullet;
     public Sprite lifeguard_sprite;
     public Sprite bullet_sprite;
-    private float speed = 300;
+    private float lifeguardSpeed = 300;
     private float speed_bullet = 1000;
     private float gunAnchor_X = 0.52f; //0.0 is the left edge of sprite, 1.0 is right edge. This will be almost center
     private float gunAnchor_Y = 0.90f;//0.0 is the bottom of sprite, 1.0 is the top. This will make bullet come out top
     private final Sound shootSound;
     private float volume = 0.5f;
+    private int powerUpTime = 0;
 
     public Lifeguard(Texture img, Texture img_bullet, Color color, Sound sound) {
         lifeguard_sprite = new Sprite(img); // Lifeguard sprite
@@ -60,9 +61,9 @@ public class Lifeguard {
         }
 
         // Press "A" or left arrow, lifeguard moves LEFT
-        if(Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) position.x-= deltaTime * speed;
+        if(Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) position.x-= deltaTime * lifeguardSpeed;
         // Press "D" or right arrow, lifeguard moves RIGHT
-        if(Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) position.x+= deltaTime * speed;
+        if(Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) position.x+= deltaTime * lifeguardSpeed;
 
         // Bounds checking to make sure lifeguard doesn't go off-screen to the left or right side of window
         float left = 0f; // Left edge of LibGDX screen is ALWAYS 0, regardless of screen size.
@@ -80,5 +81,28 @@ public class Lifeguard {
         lifeguard_sprite.draw(batch); // Draws the lifeguard sprite
         bullet_sprite.setPosition(position_bullet.x, position_bullet.y); // Sets position of the bullet sprite
         bullet_sprite.draw(batch); // Draws the bullet sprite
+    }
+
+    // Power Up doubles speed and quadruples size of bullet
+    // Sets 'timer' to decrease when each frame is rendered
+    public void PowerUp() {
+        this.speed_bullet += 1000;
+        this.bullet_sprite.setSize((float) (this.bullet_sprite.getWidth() * 1.25),(float) (this.bullet_sprite.getHeight() * 1.25));
+        this.lifeguardSpeed += 50;
+    }
+
+    // Power Up Timer Decreases with each frame render
+    public int PowerUpTime() {
+        if (this.powerUpTime > 0) {
+            this.powerUpTime = powerUpTime - 1;
+        }
+        return this.powerUpTime;
+    }
+
+    // Reset after power up
+    public void ResetBullet() {
+        this.speed_bullet = 1000;
+        this.bullet_sprite.setSize(24,20);
+        this.lifeguardSpeed = 300;
     }
 }
