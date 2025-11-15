@@ -92,6 +92,7 @@ public class Lifeguard {
     }
 
     // Power Up Timer Decreases with each frame render
+    // not used currently but keeping here in case I make a SUPER POWER-UP
     public int PowerUpTime() {
         if (this.powerUpTime > 0) {
             this.powerUpTime = powerUpTime - 1;
