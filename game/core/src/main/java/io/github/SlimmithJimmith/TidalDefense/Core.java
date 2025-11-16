@@ -37,7 +37,7 @@ public class Core extends ApplicationAdapter {
     private Texture img_background;
     Lifeguard lifeguard; //Instantiate lifeguard object
     PowerUp powerUp; // Instantiate power up object
-    boolean powerUpReady = true;
+    private boolean powerUpReady = true;
 
     // Enemy setup
     EnemyManager enemyManager;
@@ -205,8 +205,6 @@ public class Core extends ApplicationAdapter {
                     batch.draw(img_background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
                     lifeguard.Draw(batch);
 
-                    // Check if power up received
-
                     // enemyManager returns zero or num points of enemy killed
                     score += enemyManager.enemyHit(lifeguard, enemy_death);
                     scoreLabel.setText("Level: " + currentLevel + " Score: " + score); //display score to user
@@ -258,6 +256,19 @@ public class Core extends ApplicationAdapter {
                         triggerGameOver();
                         batch.end();   // Batch was begun earlier
                         return;        // Stop the rest of render() for this frame
+                    }
+
+                    // Spawn OctoMini if in boss level
+                    if (currentLevel % 7 == 0) {
+                        enemyManager.updateOctoMinis(Gdx.graphics.getDeltaTime()); // move minis
+
+                        score += enemyManager.octoMiniHit(lifeguard, enemy_death); // detect mini being hit
+
+                        if (enemyManager.octoMiniPlayerCollision(lifeguard)) { // detect player being hit
+                            triggerGameOver();
+                            batch.end();
+                            return;
+                        }
                     }
 
                     batch.end();

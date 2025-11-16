@@ -13,24 +13,24 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 
-public class Fish extends Enemy {
+public class OctoBoss extends Enemy {
 
-    //A constant variable that defines how many points a fish is worth when killed.
+    //A constant variable that defines how many points an OctoBoss is worth when killed.
     //Static because it is one value for each fish. Final because it never changes.
-    private static final int POINTS = 50;
+    private static final int POINTS = 500;
 
-    public Fish(Vector2 position) {
+    public OctoBoss(Vector2 position) {
         super(position);
-        Texture img_fish = new Texture("Fish.png");
-        this.enemy_sprite = new Sprite(img_fish);
-        this.enemy_sprite.setSize(50,50); // Adjust to change size of fish
-        this.health = 1;
+        Texture img_OctoBoss = new Texture("Octopus.png");
+        this.enemy_sprite = new Sprite(img_OctoBoss);
+        this.enemy_sprite.setSize(250,250); // Adjust to change size of fish
+        this.health = 25;
     }
 
     //Tells compiler that we are implementing abstract method declared in Enemy.
     @Override
     int getPoints() {
-        return POINTS; //Return this fish's points' value.
+        return POINTS; //Return this boss's points' value.
     }
 
 }
