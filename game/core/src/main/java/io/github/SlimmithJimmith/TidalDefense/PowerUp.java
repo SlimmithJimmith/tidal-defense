@@ -19,7 +19,7 @@ import com.badlogic.gdx.math.Vector2;
 public class PowerUp {
     public Vector2 position;
     public Sprite powerUp_sprite;
-    private Texture img_PowerUp = new Texture("PowerUp.png");
+    private final Texture img_PowerUp = new Texture("PowerUp.png");
 
     // Start position of power up for x and y coordinates to center
     float startX = Gdx.graphics.getWidth()/2f - ((float) Math.random() * 100);
@@ -30,7 +30,7 @@ public class PowerUp {
         this.position = new Vector2(startX, startY);
 
         this.powerUp_sprite = new Sprite(img_PowerUp);
-        this.powerUp_sprite.setSize(40,50); // Adjust to change size of powerUp
+        this.powerUp_sprite.setSize(50,60); // Adjust to change size of powerUp
     }
 
     // Moves the power up
@@ -77,6 +77,5 @@ public class PowerUp {
     public void dispose() {
         img_PowerUp.dispose();
     }
-
 
 }

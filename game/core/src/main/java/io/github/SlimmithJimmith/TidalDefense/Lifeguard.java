@@ -24,7 +24,7 @@ public class Lifeguard {
     public Sprite lifeguard_sprite;
     public Sprite bullet_sprite;
     private float lifeguardSpeed = 300;
-    private float speed_bullet = 1000;
+    private float speed_bullet = 1500;
     private float gunAnchor_X = 0.52f; //0.0 is the left edge of sprite, 1.0 is right edge. This will be almost center
     private float gunAnchor_Y = 0.90f;//0.0 is the bottom of sprite, 1.0 is the top. This will make bullet come out top
     private final Sound shootSound;
@@ -33,12 +33,12 @@ public class Lifeguard {
 
     public Lifeguard(Texture img, Texture img_bullet, Color color, Sound sound) {
         lifeguard_sprite = new Sprite(img); // Lifeguard sprite
-        lifeguard_sprite.setSize(75,85); // Adjust to change size of the lifeguard
+        lifeguard_sprite.setSize(100,113); // Adjust to change size of the lifeguard
         float startX = Gdx.graphics.getWidth()/2f - lifeguard_sprite.getWidth()/2f; // Centers lifeguard on x-axis
         float startY = 10f; // Offsets the lifeguard, so it starts slightly above bottom of screen
         position = new Vector2(startX, startY); // Positions the lifeguard
         bullet_sprite = new Sprite(img_bullet); // Bullet sprite
-        bullet_sprite.setSize(24,20); // Adjust to change size of the bullets
+        bullet_sprite.setSize(36,30); // Adjust to change size of the bullets
         bullet_sprite.setColor(color); // Ability to change color of bullet in main
         position_bullet = new Vector2(0,10000); // Position of the bullet
         this.shootSound = sound;
@@ -86,7 +86,7 @@ public class Lifeguard {
     // Power Up doubles speed and quadruples size of bullet
     // Sets 'timer' to decrease when each frame is rendered
     public void PowerUp() {
-        this.speed_bullet += 1000;
+        this.speed_bullet *= 1.5F;
         this.bullet_sprite.setSize((float) (this.bullet_sprite.getWidth() * 1.25),(float) (this.bullet_sprite.getHeight() * 1.25));
         this.lifeguardSpeed += 50;
     }
