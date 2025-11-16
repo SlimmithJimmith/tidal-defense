@@ -12,7 +12,7 @@ public class Shark extends Enemy {
 
     public Shark(Vector2 position) {
         super(position);
-        Texture img_Shark = new Texture("SharkUp.png");
+        Texture img_Shark = new Texture("Shark.png");
         this.enemy_sprite = new Sprite(img_Shark);
         this.enemy_sprite.setSize(100,75); // Adjust to change size of shark
         this.health = 3;
