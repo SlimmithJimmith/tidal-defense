@@ -48,7 +48,6 @@ public class Core extends ApplicationAdapter {
 
     // Menu variables
     private Stage menuStage;
-    private Table settingsTable;
     private Table mainMenuTable;
     private boolean showingMenu = true;
     private boolean showSettings = false;
@@ -59,7 +58,11 @@ public class Core extends ApplicationAdapter {
     private boolean showGameOver = false;
 
     // Overall volume
-    float volume = 0.7f;
+    private float volume = 0.7f;
+
+    // Music enabled flag
+    private boolean musicEnabled = true;
+
 
     // Sound
     Sound bullet_sound;
@@ -68,13 +71,9 @@ public class Core extends ApplicationAdapter {
 
     // Bg Music
     Music music;
-    private boolean musicEnabled = true; // toggle button (initially true)
 
-    // image files for each case.
-    private Texture soundOnTex, soundOnPressedTex, soundOffTex, soundOffPressedTex;
-
-    // We need this so we can display the textures for Scene2D to the button
-    private TextureRegionDrawable soundOn, soundOnPressed, soundOff, soundOffPressed;
+    // Setting screen
+    private SettingsMenu settingsMenu;
 
     //Leaderboard
     private Leaderboard leaderboard;
@@ -93,25 +92,8 @@ public class Core extends ApplicationAdapter {
         // Bg music
         music = Gdx.audio.newMusic(Gdx.files.internal("sounds/bg_music.mp3"));
         music.setLooping(true); // repeat forever
-
-        // Play only if music is enabled
-        if (musicEnabled) {
-            music.setVolume(volume);
-            music.play();
-        }
-
-        // Load the image files for each button case
-        soundOnTex = new Texture(Gdx.files.internal("button/music-on-btn-up.png"));
-        soundOnPressedTex = new Texture(Gdx.files.internal("button/music-on-btn-down.png"));
-        soundOffTex = new Texture(Gdx.files.internal("button/music-off-btn-up.png"));
-        soundOffPressedTex = new Texture(Gdx.files.internal("button/music-off-btn-down.png"));
-
-        // Wrap each texture into a TextureRegionDrawable
-        // We did this since Scene2D buttons only understand drawables, not raw textures.
-        soundOn = new TextureRegionDrawable(new TextureRegion(soundOnTex));
-        soundOnPressed = new TextureRegionDrawable(new TextureRegion(soundOnPressedTex));
-        soundOff = new TextureRegionDrawable(new TextureRegion(soundOffTex));
-        soundOffPressed = new TextureRegionDrawable(new TextureRegion(soundOffPressedTex));
+        music.setVolume(volume);
+        music.play();
 
         batch = new SpriteBatch();
         img_lifeguard = new Texture("LifeguardShootingUp.png"); //loads lifeguad image
@@ -120,6 +102,18 @@ public class Core extends ApplicationAdapter {
 
         //Create menu
         menuStage = new Stage(new ScreenViewport());
+
+        settingsMenu = new SettingsMenu(menuStage, img_background, music, button_click_sound,
+            this, // pass Core so SettingsMenu can call getVolume/setVolume
+            new Runnable() {
+                @Override
+                public void run() {
+                    mainMenu();
+                }
+            }
+        );
+
+
         Gdx.input.setInputProcessor(menuStage);
         mainMenu();
 
@@ -386,7 +380,10 @@ public class Core extends ApplicationAdapter {
                 button_click_sound.play(volume);
                 System.out.println("Settings button clicked!");
                 paused = true;
-                settingsMenu();
+                // Show the Settings screen handled by SettingsMenu class
+                if (settingsMenu != null) {
+                    settingsMenu.show();
+                }
             }
         });
 
@@ -415,77 +412,6 @@ public class Core extends ApplicationAdapter {
      * buttons for the settings screen. Each button will have their own listener
      * to tigger their events.
      */
-    private void settingsMenu() {
-        // Clear any existing tables.
-        clearTables();
-        menuStage.clear();
-
-        Image menuBg = new Image(new TextureRegionDrawable(new TextureRegion(img_background)));
-        menuBg.setFillParent(true);
-        menuStage.addActor(menuBg);
-
-        // Build the buttons and their listeners. (Only 1 right now :) )
-        ImageButton backButton = makeButton("button/back-btn-up.png", "button/back-btn-down.png");
-        backButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume);
-                mainMenu();
-            }
-        });
-
-        // I did this so we later update it according to the local saved file for each user
-        // Create music toggle button (according to the initial settings)
-        // If musicEnabled = true -> show (music-on) icon
-        // If musicEnabled = false -> show (music-off) icon
-        ImageButton musicBtn = new ImageButton(
-            musicEnabled ? soundOn : soundOff,
-            musicEnabled ? soundOnPressed : soundOffPressed
-        );
-
-        musicBtn.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume); // click sound
-
-                // Flip music state: if On then Off, and vice versa.
-                musicEnabled = !musicEnabled;
-
-                // If music is now enabled, start or resume playing it
-                if (musicEnabled) {
-                    if (!music.isPlaying()) {
-                        music.setVolume(volume);
-                        music.play(); // Resume if it was paused
-                    }
-
-                    // Update the button icon to show (music:on)
-                    musicBtn.getStyle().imageUp   = soundOn;
-                    musicBtn.getStyle().imageDown = soundOnPressed;
-                } else {
-                    // Otherwise, pause the music
-                    music.pause();
-                    // Update the button icon to show (music:off)
-                    musicBtn.getStyle().imageUp   = soundOff;
-                    musicBtn.getStyle().imageDown = soundOffPressed;
-                }
-            }
-        });
-
-        // Build the table of buttons.
-        settingsTable = new Table();
-        settingsTable.setFillParent(true);
-        settingsTable.center();
-
-        // Add the button to the table. (Music toggle first,then Back)
-        settingsTable.add(musicBtn).width(300).height(80).row();
-        settingsTable.add(backButton).width(300).height(80).row();
-
-        // Add the actor (button) to the stage.
-        menuStage.addActor(settingsTable);
-
-        // Event handler for the input on the stage.
-        Gdx.input.setInputProcessor(menuStage);
-    }
 
     public void leaderboardMenu(){
         // Clear any existing tables.
@@ -506,11 +432,6 @@ public class Core extends ApplicationAdapter {
             mainMenuTable.remove();
             mainMenuTable = null;
         }
-
-        if(settingsTable != null) {
-            settingsTable.remove();
-            settingsTable = null;
-        }
     }
 
     //Buttons will not distort when the screen is resized.
@@ -522,6 +443,43 @@ public class Core extends ApplicationAdapter {
         if (gameOver != null)    gameOver.resize(width, height);
     }
 
+    /**
+     * Getter for current volume.
+     *
+     * @return current master volume (0.0 - 1.0)
+     */
+    public float getVolume() {
+        return volume;
+    }
+
+    /**
+     * Setter for current volume. Called by SettingsMenu slider.
+     *
+     * @param volume new volume (0.0 - 1.0)
+     */
+    public void setVolume(float volume) {
+        this.volume = volume;
+    }
+
+    /**
+     * Returns whether background music is enabled.
+     *
+     * @return true if music is enabled, false otherwise
+     */
+    public boolean isMusicEnabled() {
+        return musicEnabled;
+    }
+
+    /**
+     * Sets whether background music is enabled.
+     *
+     * @param musicEnabled new music enabled flag
+     */
+    public void setMusicEnabled(boolean musicEnabled) {
+        this.musicEnabled = musicEnabled;
+    }
+
+
     @Override
     public void dispose() {
         batch.dispose();
@@ -530,10 +488,7 @@ public class Core extends ApplicationAdapter {
         img_bullet.dispose();
         img_background.dispose();
         if (gameOver != null) gameOver.dispose();
-        if (soundOnTex != null)  soundOnTex.dispose();
-        if (soundOnPressedTex != null) soundOnPressedTex.dispose();
-        if (soundOffTex != null)  soundOffTex.dispose();
-        if (soundOffPressedTex != null) soundOffPressedTex.dispose();
+        if (settingsMenu != null) settingsMenu.dispose();
         if (music != null) music.dispose();
     }
 }
