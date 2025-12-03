@@ -21,7 +21,7 @@ public class OctoBoss extends Enemy {
 
     public OctoBoss(Vector2 position) {
         super(position);
-        Texture img_OctoBoss = new Texture("Octopus.png");
+        Texture img_OctoBoss = EnemyManager.img_OctoBoss;
         this.enemy_sprite = new Sprite(img_OctoBoss);
         this.enemy_sprite.setSize(250,250); // Adjust to change size of fish
         this.health = 25;

@@ -21,7 +21,7 @@ public class Fish extends Enemy {
 
     public Fish(Vector2 position) {
         super(position);
-        Texture img_fish = new Texture("Fish.png");
+        Texture img_fish = EnemyManager.img_fish;
         this.enemy_sprite = new Sprite(img_fish);
         this.enemy_sprite.setSize(50,50); // Adjust to change size of fish
         this.health = 1;
