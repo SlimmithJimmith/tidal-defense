@@ -12,6 +12,7 @@ package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.MathUtils; //for random
@@ -43,6 +44,12 @@ public class EnemyManager {
     private static final float MAX_LEVEL_BASE_SPEED = 1000f;  //cap so it never feels unfair
 
     private int amount_alive_enemies;
+
+    // Load enemy textures ONCE when EnemyManager created, prevents lag when createFormation is called
+    public static Texture img_fish = new Texture("Fish.png");
+    public static Texture img_Shark = new Texture("Shark.png");
+    public static Texture img_OctoBoss = new Texture("Octopus.png");
+    public static Texture img_OctoMini = new Texture("OctoMini.png");
 
     public EnemyManager() {
         offset_enemies = new Vector2(0,0);
@@ -187,19 +194,16 @@ public class EnemyManager {
         boolean seeded = false;
         for (int i = 0; i < enemies.length; i++) {
             if (enemies[i].alive) {
-                int indexX = i % numWidth_enemies; //Columns
-                int indexY = i / numWidth_enemies; //Rows
-
                 if (!seeded) {
-
-                    // seed min/max with the first alive enemy
+                    // Seed min/max with the first alive enemy
                     minX_enemies = maxX_enemies = minY_enemies = maxY_enemies = i;
                     seeded = true;
                 } else {
-                    if (indexX > maxX_enemies) maxX_enemies = i;
-                    if (indexX < minX_enemies) minX_enemies = i;
-                    if (indexY > maxY_enemies) maxY_enemies = i;
-                    if (indexY < minY_enemies) minY_enemies = i;
+                    if (enemies[i].position.x < enemies[minX_enemies].position.x) minX_enemies = i;
+                    if (enemies[i].position.x > enemies[maxX_enemies].position.x) maxX_enemies = i;
+                    int indexY = i / numWidth_enemies;
+                    if (indexY > maxY_enemies / numWidth_enemies) maxY_enemies = i;
+                    if (indexY < minY_enemies / numWidth_enemies) minY_enemies = i;
                 }
 
                 amount_alive_enemies++;
@@ -244,14 +248,15 @@ public class EnemyManager {
 
     // Bounds checking to ensure enemies do not exit the RIGHT or LEFT side of the screen
     public void enemyBoundsCheck() {
-        float rightLimit = Gdx.graphics.getWidth() - enemies[0].enemy_sprite.getWidth();
+        float rightLimit = Gdx.graphics.getWidth() - enemies[maxX_enemies].enemy_sprite.getWidth();
         if (enemies[maxX_enemies].position.x >= rightLimit || enemies[minX_enemies].position.x <= 0f) {
             // Change directions
             direction_enemies *= -1;
             // Move enemies one step inward to prevent 'falling'
             this.updateEnemyPosition();
             // Makes the enemies go down towards the lifeguard
-            offset_enemies.y -= enemies[0].enemy_sprite.getHeight() * enemies[0].enemy_sprite.getScaleY() * 0.25f;
+            offset_enemies.y -= enemies[minY_enemies].enemy_sprite.getHeight() *
+                                enemies[minY_enemies].enemy_sprite.getScaleY() * 0.25f;
         }
     }
 

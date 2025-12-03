@@ -21,10 +21,9 @@ public class OctoMini extends Enemy {
 
     public OctoMini(Vector2 position) {
         super(position);
-        Texture img_OctoMini = new Texture("OctoMini.png");
+        Texture img_OctoMini = EnemyManager.img_OctoMini;
         this.enemy_sprite = new Sprite(img_OctoMini);
         this.enemy_sprite.setSize(50,50); // Adjust to change size of fish
-        this.health = 2;
     }
 
     // OctoMinis only move downward, adjust number for speed tuning
