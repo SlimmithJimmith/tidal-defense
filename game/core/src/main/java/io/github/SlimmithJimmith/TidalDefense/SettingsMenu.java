@@ -92,27 +92,22 @@ public class SettingsMenu {
         soundOffTex = new Texture(Gdx.files.internal("button/music-off-btn-up.png"));
         soundOffPressedTex = new Texture(Gdx.files.internal("button/music-off-btn-down.png"));
 
+        sliderBgTex = new Texture(Gdx.files.internal("button/slider2.png"));
+        sliderKnobTex = new Texture(Gdx.files.internal("button/knob2.png"));
+
         // Wrap each texture into a TextureRegionDrawable
         soundOn = new TextureRegionDrawable(new TextureRegion(soundOnTex));
         soundOnPressed = new TextureRegionDrawable(new TextureRegion(soundOnPressedTex));
         soundOff = new TextureRegionDrawable(new TextureRegion(soundOffTex));
         soundOffPressed = new TextureRegionDrawable(new TextureRegion(soundOffPressedTex));
 
-        // Create simple Pixmap-based bar & knob for base volume slider (we can swap to PNG later)
-        Pixmap bgPixmap = new Pixmap(200, 10, Pixmap.Format.RGBA8888);
-        bgPixmap.setColor(Color.LIGHT_GRAY);
-        bgPixmap.fill();
-        sliderBgTex = new Texture(bgPixmap);
-        bgPixmap.dispose();
-
-        Pixmap knobPixmap = new Pixmap(20, 20, Pixmap.Format.RGBA8888);
-        knobPixmap.setColor(Color.WHITE);
-        knobPixmap.fillCircle(10, 10, 10); // simple circular knob
-        sliderKnobTex = new Texture(knobPixmap);
-        knobPixmap.dispose();
-
         sliderBgDrawable = new TextureRegionDrawable(new TextureRegion(sliderBgTex));
         sliderKnobDrawable = new TextureRegionDrawable(new TextureRegion(sliderKnobTex));
+    }
+
+    public void render(float delta) {
+        menuStage.act(delta);
+        menuStage.draw();
     }
 
     /**
