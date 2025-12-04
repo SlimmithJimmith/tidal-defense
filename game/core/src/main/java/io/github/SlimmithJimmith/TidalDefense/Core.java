@@ -25,16 +25,16 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.*;
 
 // Utils
-import com.badlogic.gdx.utils.*;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
-import org.w3c.dom.Text;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Core extends ApplicationAdapter {
-    private SpriteBatch batch;
+    public SpriteBatch batch;
     private Texture img_lifeguard;
     private Texture img_bullet;
     private Texture img_background;
+    private Texture img_title;
     Lifeguard lifeguard; //Instantiate lifeguard object
     PowerUp powerUp; // Instantiate power up object
     private boolean powerUpReady = true;
@@ -49,8 +49,7 @@ public class Core extends ApplicationAdapter {
     // Menu variables
     private Stage menuStage;
     private Table mainMenuTable;
-    private boolean showingMenu = true;
-    private boolean showSettings = false;
+    boolean showingMenu = true;
     private boolean paused = false;
     private boolean running = true;
 
@@ -75,12 +74,20 @@ public class Core extends ApplicationAdapter {
     // Setting screen
     private SettingsMenu settingsMenu;
 
+    private MainMenu mainMenu;
+
+    private GamePlay gamePlay;
+
     //Leaderboard
     private Leaderboard leaderboard;
 
     //Heads up display of score and level
     private Stage hudStage;
     private Label scoreLabel;
+
+    private ImageButton pauseBtn;
+    public Stage gameStage;
+    public Table pauseTable;
 
     @Override
     public void create() {
@@ -99,23 +106,52 @@ public class Core extends ApplicationAdapter {
         img_lifeguard = new Texture("LifeguardShootingUp.png"); //loads lifeguad image
         img_bullet = new Texture("Bullet.png"); //loads bullet image
         img_background = new Texture("background-2.png");
+        img_title = new Texture("Title.png");
 
         //Create menu
         menuStage = new Stage(new ScreenViewport());
+
+        gamePlay = new GamePlay(powerUpReady, img_background, score, scoreLabel, hudStage,this);
 
         settingsMenu = new SettingsMenu(menuStage, img_background, music, button_click_sound,
             this, // pass Core so SettingsMenu can call getVolume/setVolume
             new Runnable() {
                 @Override
                 public void run() {
-                    mainMenu();
+                    mainMenu.showMainMenu();
                 }
             }
         );
 
+        mainMenu = new MainMenu(menuStage, img_background, button_click_sound, volume,
+            this,
+            //toPlayGame
+            new Runnable() {
+                 @Override
+                public void run() {
+                    showingMenu = false;
+                    running = true;
+                    paused = false;
+                }
+            },
+            //toQuit
+            new Runnable() {
+                @Override
+                public void run() {
+                    Gdx.app.exit();
+                }
+            },
+            //toSettingsMenu
+            new Runnable() {
+            @Override
+                public void run() {
+                settingsMenu.show();
+                settingsMenu.render(Gdx.graphics.getDeltaTime());
+                showingMenu = true;
+            }
+            });
 
         Gdx.input.setInputProcessor(menuStage);
-        mainMenu();
 
         lifeguard = new Lifeguard(img_lifeguard, img_bullet, Color.BLUE, bullet_sound); //creates lifeguard + bullet, bullet color is blue
 
@@ -153,10 +189,9 @@ public class Core extends ApplicationAdapter {
                     resetGame();
                     showGameOver = false;
                     showingMenu = true;
-                    mainMenu();
+                    mainMenu.showMainMenu();
                 }
-            }
-        );
+            });
 
 
         //Create heads up display
@@ -176,10 +211,14 @@ public class Core extends ApplicationAdapter {
 
             Gdx.gl.glClearColor(0, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
+//
             menuStage.act(Gdx.graphics.getDeltaTime());
             menuStage.draw();
-
+//
+            if(mainMenu.isVisible){
+                menuStage.act(Gdx.graphics.getDeltaTime());
+                menuStage.draw();
+            }
             if (showGameOver) {
                 gameOver.render(Gdx.graphics.getDeltaTime());
                 return;
@@ -190,8 +229,9 @@ public class Core extends ApplicationAdapter {
 
                 //If the menu is not showing, the gameplay will run.
                 if (!showingMenu) {
+                    gamePlay.render();
 
-                    // Move enemies
+//                    // Move enemies
                     enemyManager.updateEnemyPosition();
 
                     ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
@@ -274,41 +314,7 @@ public class Core extends ApplicationAdapter {
             } // End if (running && !paused)
     } // End render()
 
-    /*
-    Try/catch is used to catch and display runtime errors when building the buttons
-    If you run into any issues and see a white box, there may be a typo in your file name.
-     */
-    /**
-     * Helper method to build the buttons using their texture files
-     *
-     * @param upFile unpressed look for the button
-     * @param downFile pressed look for the button
-     * @return drawable button
-     */
-    private ImageButton makeButton(String upFile, String downFile){
-        //Load textures for the play button
-        try {
-            Texture upTex = new Texture(Gdx.files.internal(upFile));
-            Texture downTex = new Texture(Gdx.files.internal(downFile));
-
-            //Create Drawables for play button
-            TextureRegionDrawable upDrawable = new TextureRegionDrawable(new TextureRegion(upTex));
-            TextureRegionDrawable downDrawable = new TextureRegionDrawable(new TextureRegion(downTex));
-
-            return new ImageButton(upDrawable, downDrawable);
-
-        }catch (Exception e){
-            e.printStackTrace();
-            Pixmap pixmap = new Pixmap(100, 50, Pixmap.Format.RGBA8888);
-            pixmap.setColor(Color.WHITE);
-            pixmap.fill();
-            Texture fallbackTex = new Texture(pixmap);
-            TextureRegionDrawable fallbackDrawable = new TextureRegionDrawable(new TextureRegion(fallbackTex));
-            return new ImageButton(fallbackDrawable, fallbackDrawable);
-        }
-    }
-
-    private void triggerGameOver() {
+    public void triggerGameOver() {
         // Tell the game that we are now in the "game over" state
         showGameOver = true;
 
@@ -341,77 +347,113 @@ public class Core extends ApplicationAdapter {
      * listener to "listen" for the click of the button.This will trigger
      * whatever the buttons purpose is.
      */
-    private void mainMenu(){
-        // Clear any existing tables.
+
+    private void pauseMenu(){
         clearTables();
 
         menuStage.clear();
+        //Background
         Image menuBg = new Image(new TextureRegionDrawable(new TextureRegion(img_background)));
         menuBg.setFillParent(true);
         menuStage.addActor(menuBg);
-
-        ImageButton playButton = makeButton("button/play-btn-up.png", "button/play-btn-down.png");
-
-        // Listener listens for the click on the button.
-        playButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume);
-                clearTables();
-                paused = false;         // Game is not paused.
-                running = true;         // Game is running.
-                showingMenu = false;    // Closes menu.
-            }
-        });
-
-        ImageButton quitButton = makeButton("button/quit-btn-up.png", "button/quit-btn-down.png");
-        quitButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume);
-                Gdx.app.exit();     // Closes the application from the menu.
-            }
-        });
-
-        ImageButton settingsButton = makeButton("button/settings-btn-up.png", "button/settings-btn-down.png");
-        settingsButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume);
-                System.out.println("Settings button clicked!");
-                paused = true;
-                // Show the Settings screen handled by SettingsMenu class
-                if (settingsMenu != null) {
-                    settingsMenu.show();
-                }
-            }
-        });
-
-        // Don't have a listener for this button at this time.
-        ImageButton leaderboardButton = makeButton("button/lead-btn-up.png", "button/lead-btn-down.png");
-
-        // Build the table of buttons.
-        mainMenuTable = new Table();
-        mainMenuTable.setFillParent(true);
-        mainMenuTable.center();
-
-        // Add the buttons to the table.
-        mainMenuTable.add(playButton).width(300).height(80).row();
-        mainMenuTable.add(quitButton).width(300).height(80).row();
-        mainMenuTable.add(settingsButton).width(300).height(80).row();
-        mainMenuTable.add(leaderboardButton).width(300).height(80).row();
-
-        //Add the actor (button) to the stage.
-        menuStage.addActor(mainMenuTable);
-
-        // Event handler for the input on the stage.
-        Gdx.input.setInputProcessor(menuStage);
     }
-    /**
-     * settingsMenu clears the screen of any existing buttons and builds the
-     * buttons for the settings screen. Each button will have their own listener
-     * to tigger their events.
-     */
+//    private void mainMenu(){
+//        // Clear any existing tables.
+//        clearTables();
+//
+//        menuStage.clear();
+//
+//        //Background
+//        Image menuBg = new Image(new TextureRegionDrawable(new TextureRegion(img_background)));
+//        menuBg.setFillParent(true);
+//        menuStage.addActor(menuBg);
+//
+//        ImageButton playButton = makeButton("button/play-btn-up.png", "button/play-btn-down.png");
+//
+//        // Listener listens for the click on the button.
+//        playButton.addListener(new ClickListener() {
+//            @Override
+//            public void clicked(InputEvent event, float x, float y) {
+//                button_click_sound.play(volume);
+//                clearTables();
+//                paused = false;         // Game is not paused.
+//                running = true;         // Game is running.
+//                showingMenu = false;    // Closes menu.
+//            }
+//        });
+//
+//        ImageButton quitButton = makeButton("button/quit-btn-up.png", "button/quit-btn-down.png");
+//        quitButton.addListener(new ClickListener() {
+//            @Override
+//            public void clicked(InputEvent event, float x, float y) {
+//                button_click_sound.play(volume);
+//                Gdx.app.exit();     // Closes the application from the menu.
+//            }
+//        });
+//
+//        ImageButton settingsButton = makeButton("button/settings-btn-up.png", "button/settings-btn-down.png");
+//        settingsButton.addListener(new ClickListener() {
+//            @Override
+//            public void clicked(InputEvent event, float x, float y) {
+//                button_click_sound.play(volume);
+//                System.out.println("Settings button clicked!");
+//                paused = true;
+//                // Show the Settings screen handled by SettingsMenu class
+//                if (settingsMenu != null) {
+//                    settingsMenu.show();
+//                }
+//            }
+//        });
+//
+//        // Don't have a listener for this button at this time.
+//        ImageButton leaderboardButton = makeButton("button/lead-btn-up.png", "button/lead-btn-down.png");
+//
+//        // Build the table of buttons.
+//        mainMenuTable = new Table();
+//        mainMenuTable.setFillParent(true);
+//
+//        mainMenuTable.center().top();
+//        Texture title = new Texture("title.png");
+//        Image titleImage = new Image(new TextureRegionDrawable(new TextureRegion(title)));
+//        titleImage.setScaling(Scaling.fit);
+//
+//        mainMenuTable.add(titleImage).width(1000).height(300).padBottom(50).row();
+//
+//        // Add the buttons to the table.
+//        mainMenuTable.add(playButton).width(300).height(80).row();
+//        mainMenuTable.add(quitButton).width(300).height(80).row();
+//        mainMenuTable.add(settingsButton).width(300).height(80).row();
+//        mainMenuTable.add(leaderboardButton).width(300).height(80).row();
+//
+//        //Add the actor (button) to the stage.
+//        menuStage.addActor(mainMenuTable);
+//
+//        // Event handler for the input on the stage.
+//        Gdx.input.setInputProcessor(menuStage);
+//    }
+
+    private ImageButton makeButton(String upFile, String downFile){
+        //Load textures for the play button
+        try {
+            Texture upTex = new Texture(Gdx.files.internal(upFile));
+            Texture downTex = new Texture(Gdx.files.internal(downFile));
+
+            //Create Drawables for play button
+            TextureRegionDrawable upDrawable = new TextureRegionDrawable(new TextureRegion(upTex));
+            TextureRegionDrawable downDrawable = new TextureRegionDrawable(new TextureRegion(downTex));
+
+            return new ImageButton(upDrawable, downDrawable);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            Pixmap pixmap = new Pixmap(100, 50, Pixmap.Format.RGBA8888);
+            pixmap.setColor(Color.WHITE);
+            pixmap.fill();
+            Texture fallbackTex = new Texture(pixmap);
+            TextureRegionDrawable fallbackDrawable = new TextureRegionDrawable(new TextureRegion(fallbackTex));
+            return new ImageButton(fallbackDrawable, fallbackDrawable);
+        }
+    }
 
     public void leaderboardMenu(){
         // Clear any existing tables.
