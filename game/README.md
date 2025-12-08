@@ -6,7 +6,7 @@ This project was generated with a template including simple application launcher
 
 ## Platforms
 
-- `core`: Main module with the application logic shared by all platforms.
+- `tidalDefenseGame`: Main module with the application logic shared by all platforms.
 - `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
 
 ## Gradle
@@ -30,4 +30,4 @@ Useful Gradle tasks and flags:
 - `test`: runs unit tests (if any).
 
 Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
-For example, `core:clean` removes `build` folder only from the `core` project.
+For example, `tidalDefenseGame:clean` removes `build` folder only from the `tidalDefenseGame` project.

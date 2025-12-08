@@ -1,3 +1,12 @@
+/**
+ * Leaderboard.java
+ * Handles a json file for keeping track of high scores between application runs
+ *
+ * @author Team #2 - Brendan Boyko, Jimi Ruble, Mehdi Khazaal, James Watson
+ * @version 1.0
+ * Create Date: 11-20-2025
+ */
+
 package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.Gdx;

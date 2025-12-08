@@ -2,7 +2,7 @@ package io.github.SlimmithJimmith.TidalDefense.lwjgl3;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import io.github.SlimmithJimmith.TidalDefense.Core;
+import io.github.SlimmithJimmith.TidalDefense.TidalDefenseGame;
 
 /** Launches the desktop (LWJGL3) application. */
 public class Lwjgl3Launcher {
@@ -12,7 +12,7 @@ public class Lwjgl3Launcher {
     }
 
     private static Lwjgl3Application createApplication() {
-        return new Lwjgl3Application(new Core(), getDefaultConfiguration());
+        return new Lwjgl3Application(new TidalDefenseGame(), getDefaultConfiguration());
     }
 
     private static Lwjgl3ApplicationConfiguration getDefaultConfiguration() {
@@ -31,7 +31,8 @@ public class Lwjgl3Launcher {
         configuration.setWindowedMode(1200, 900);
         //// You can change these files; they are in lwjgl3/src/main/resources/ .
         //// They can also be loaded from the root of assets/ .a
-        configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");
+        //configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");
+        configuration.setWindowIcon("assets/PowerUp.png");
         return configuration;
     }
 }

@@ -1,6 +1,13 @@
-package io.github.SlimmithJimmith.TidalDefense;
+/**
+ * Scoreboard.java
+ * For use as a data type with the Leaderboard
+ *
+ * @author Team #2 - Brendan Boyko, Jimi Ruble, Mehdi Khazaal, James Watson
+ * @version 1.0
+ * Create Date: 11-20-2025
+ */
 
-import com.badlogic.gdx.utils.Array;
+package io.github.SlimmithJimmith.TidalDefense;
 
 public class Scoreboard {
     public String name; //player initials / name
@@ -9,7 +16,6 @@ public class Scoreboard {
 
     //No arg constructor
     public Scoreboard() {
-
     }
 
     public Scoreboard(String name, int score, long when){
@@ -17,6 +23,4 @@ public class Scoreboard {
         this.score = score;
         this.when = when;
     }
-
-
 }

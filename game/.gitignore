@@ -3,7 +3,7 @@
 gradle-app.setting
 /build/
 /android/build/
-/core/build/
+/tidalDefenseGame/build/
 /lwjgl2/build/
 /lwjgl3/build/
 /html/build/
@@ -67,7 +67,7 @@ www-test/
 .project
 .metadata/
 /android/bin/
-/core/bin/
+/tidalDefenseGame/bin/
 /lwjgl2/bin/
 /lwjgl3/bin/
 /html/bin/
@@ -91,7 +91,7 @@ www-test/
 
 /nbproject/private/
 /android/nbproject/private/
-/core/nbproject/private/
+/tidalDefenseGame/nbproject/private/
 /lwjgl2/nbproject/private/
 /lwjgl3/nbproject/private/
 /html/nbproject/private/
@@ -104,7 +104,7 @@ www-test/
 
 /nbbuild/
 /android/nbbuild/
-/core/nbbuild/
+/tidalDefenseGame/nbbuild/
 /lwjgl2/nbbuild/
 /lwjgl3/nbbuild/
 /html/nbbuild/
@@ -117,7 +117,7 @@ www-test/
 
 /dist/
 /android/dist/
-/core/dist/
+/tidalDefenseGame/dist/
 /lwjgl2/dist/
 /lwjgl3/dist/
 /html/dist/
@@ -130,7 +130,7 @@ www-test/
 
 /nbdist/
 /android/nbdist/
-/core/nbdist/
+/tidalDefenseGame/nbdist/
 /lwjgl2/nbdist/
 /lwjgl3/nbdist/
 /html/nbdist/

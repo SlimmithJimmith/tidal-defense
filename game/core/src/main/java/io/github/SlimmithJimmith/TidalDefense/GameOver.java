@@ -1,9 +1,19 @@
+/**
+ * GameOver.java
+ * Data manager for the buttons and their actions of the game over screen
+ *
+ * @author Team #2 - Brendan Boyko, Jimi Ruble, Mehdi Khazaal, James Watson
+ * @version 1.0
+ * Create Date: 12-04-2025
+ */
+
 package io.github.SlimmithJimmith.TidalDefense;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
@@ -32,11 +42,11 @@ public class GameOver {
     private final Runnable onReturnToMenu;
 
     public GameOver(Leaderboard leaderboard,
-                      com.badlogic.gdx.audio.Sound buttonClickSound,
-                      float volume,
-                      Runnable onPlayAgain,
-                      Runnable onQuit,
-                      Runnable onReturnToMenu) {
+                    com.badlogic.gdx.audio.Sound buttonClickSound,
+                    float volume,
+                    Runnable onPlayAgain,
+                    Runnable onQuit,
+                    Runnable onReturnToMenu) {
 
         this.leaderboard = leaderboard;
         this.buttonClickSound = buttonClickSound;
@@ -116,19 +126,26 @@ public class GameOver {
         Image titleImg = new Image(new TextureRegionDrawable(new TextureRegion(gameOverTitleTex)));
         titleImg.setScaling(com.badlogic.gdx.utils.Scaling.fit);
 
-        goTable.add(titleImg).padTop(20).padBottom(10).row();
+        goTable.add(titleImg).pad(20).padRight(60).padLeft(60).row();
 
         // Score form
-        com.badlogic.gdx.scenes.scene2d.ui.Table scoreForm = new com.badlogic.gdx.scenes.scene2d.ui.Table();
+        Table scoreForm = new Table();
 
-        Label.LabelStyle lblStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
+        // Set font style for name input here
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        parameter.color = Color.WHITE;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
+        Label.LabelStyle lblStyle = new Label.LabelStyle(font, Color.WHITE);
         TextField.TextFieldStyle tfStyle = new TextField.TextFieldStyle();
-        tfStyle.font = new BitmapFont();
+        tfStyle.font = font;
         tfStyle.fontColor = Color.WHITE;
 
         Label nameLabel = new Label("Name:", lblStyle);
         final TextField nameField = new TextField("", tfStyle);
-        nameField.setMessageText("AAA");
+        nameField.setMessageText("YOUR NAME");
         nameField.setMaxLength(8);
 
         scoreForm.add(nameLabel).pad(5).right();
@@ -136,7 +153,7 @@ public class GameOver {
         scoreForm.row();
 
         final ImageButton saveBtn = makeButton("button/save-btn-up.png", "button/save-btn-down.png");
-        scoreForm.add(saveBtn).colspan(2).width(300).height(80).padTop(8).center();
+        scoreForm.add(saveBtn).colspan(2).width(300).height(80).padTop(4).center();
         scoreForm.row();
 
         // Save score + show leaderboard
@@ -146,7 +163,7 @@ public class GameOver {
                 buttonClickSound.play(volume);
 
                 String playerName = nameField.getText() == null ? "" : nameField.getText().trim();
-                if (playerName.isEmpty()) playerName = "AAA";
+                if (playerName.isEmpty()) playerName = "NAME";
 
                 Scoreboard row = new Scoreboard(playerName, lastScore, System.currentTimeMillis());
                 leaderboard.addScore(row);
@@ -168,7 +185,7 @@ public class GameOver {
             }
         });
 
-        goTable.add(scoreForm).padBottom(12).center();
+        goTable.add(scoreForm).padBottom(4).center();
         goTable.row();
 
         // Buttons: Play Again / Quit / Return Menu
@@ -203,19 +220,28 @@ public class GameOver {
         stage.addActor(goTable);
     }
 
-    // Leaderboard table (same as before, just moved here)
-    private Table buildLeaderboardTable() {
-        Table t = new Table();
-        BitmapFont f = new BitmapFont();
-        Label.LabelStyle ls = new Label.LabelStyle(f, Color.WHITE);
+    // Leaderboard table
+    public Table buildLeaderboardTable() {
 
-        t.add(new Label("#", ls)).pad(4);
-        t.add(new Label("Name", ls)).pad(4);
-        t.add(new Label("Score", ls)).pad(4);
-        t.row();
+        // Set font
+        Table table = new Table();
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        parameter.color = Color.WHITE;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
+        Label.LabelStyle style = new Label.LabelStyle(font, Color.WHITE);
 
-        com.badlogic.gdx.utils.Array<Scoreboard> list = leaderboard.loadAll();
-        list.sort(new java.util.Comparator<Scoreboard>() {
+        // Headers
+        table.add(new Label("Rank", style)).pad(4).padLeft(10).padRight(20);
+        table.add(new Label("Name", style)).pad(4).padLeft(10).padRight(20);
+        table.add(new Label("Score", style)).pad(4).padLeft(10).padRight(20);
+        table.row();
+
+        // Load previous scores and compare with new score
+        com.badlogic.gdx.utils.Array<Scoreboard> scores = leaderboard.loadAll();
+        scores.sort(new java.util.Comparator<Scoreboard>() {
             @Override
             public int compare(Scoreboard a, Scoreboard b) {
                 if (a.score != b.score) return Integer.compare(b.score, a.score);
@@ -223,26 +249,40 @@ public class GameOver {
             }
         });
 
-        int count = Math.min(10, list.size);
+        // Display top 10
+        int count = Math.min(10, scores.size);
         for (int i = 0; i < count; i++) {
-            Scoreboard s = list.get(i);
-            t.add(new Label(String.valueOf(i + 1), ls)).pad(2);
-            t.add(new Label(s.name, ls)).pad(2);
-            t.add(new Label(String.valueOf(s.score), ls)).pad(2);
-            t.row();
+            Scoreboard score = scores.get(i);
+            table.add(new Label(String.valueOf(i + 1), style)).pad(4).padLeft(10).padRight(20);
+            table.add(new Label(score.name, style)).pad(4).padLeft(10).padRight(20);
+            table.add(new Label(String.valueOf(score.score), style)).pad(4).padLeft(10).padRight(20);
+            table.row();
         }
 
-        return t;
+        return table;
     }
 
-    private void showLeaderboardScreen() {
+    public void showLeaderboardScreen() {
         stage.clear();
+
+        // Background
+        Texture backgroundTexture = new Texture("background-2.png");
+        Image bg = new Image(new TextureRegionDrawable(new TextureRegion(backgroundTexture)));
+        bg.setFillParent(true);
+        stage.addActor(bg);
 
         Table t = new Table();
         t.setFillParent(true);
         t.top().center();
 
-        Label.LabelStyle titleStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
+        // Set font
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        parameter.color = Color.WHITE;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
+        Label.LabelStyle titleStyle = new Label.LabelStyle(font, Color.WHITE);
         t.add(new Label("LEADERBOARD", titleStyle)).padTop(20).padBottom(10).row();
 
         Table lb = buildLeaderboardTable();

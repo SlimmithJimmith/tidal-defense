@@ -7,7 +7,7 @@
  * Create Date: 11-29-2025
  */
 
-package io.github.SlimmithJimmith.TidalDefense;
+package io.github.SlimmithJimmith.TidalDefense.Screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
@@ -26,6 +26,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import io.github.SlimmithJimmith.TidalDefense.TidalDefenseGame;
 
 /**
  * SettingsMenu builds the Settings screen and handles
@@ -44,7 +45,7 @@ public class SettingsMenu {
     private final Sound button_click_sound;
 
     // Reference to Core to read/update volume and music state
-    private final Core core;
+    private final TidalDefenseGame tidalDefenseGame;
 
     // Callback to go back to main menu (Core.mainMenu())
     private final Runnable onBackToMainMenu;
@@ -74,16 +75,16 @@ public class SettingsMenu {
      * @param img_background background texture
      * @param music background music instance
      * @param button_click sound effect for button clicks
-     * @param core reference to Core for volume and music flags
+     * @param tidalDefenseGame reference to Core for volume and music flags
      * @param onBackToMainMenu callback to return to the main menu
      */
-    public SettingsMenu(Stage menuStage, Texture img_background, Music music, Sound button_click, Core core, Runnable onBackToMainMenu) {
+    public SettingsMenu(Stage menuStage, Texture img_background, Music music, Sound button_click, TidalDefenseGame tidalDefenseGame, Runnable onBackToMainMenu) {
 
         this.menuStage = menuStage;
         this.img_background = img_background;
         this.music = music;
         this.button_click_sound = button_click;
-        this.core = core;
+        this.tidalDefenseGame = tidalDefenseGame;
         this.onBackToMainMenu = onBackToMainMenu;
 
         // Load the image files for each button case.
@@ -127,7 +128,7 @@ public class SettingsMenu {
         backButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(core.getVolume());
+                button_click_sound.play(tidalDefenseGame.getVolume());
                 if (onBackToMainMenu != null) {
                     onBackToMainMenu.run();
                 }
@@ -135,7 +136,7 @@ public class SettingsMenu {
         });
 
         // Music toggle button (icon depends on current state from Core)
-        boolean musicEnabled = core.isMusicEnabled();
+        boolean musicEnabled = tidalDefenseGame.isMusicEnabled();
         ImageButton musicBtn = new ImageButton(
             musicEnabled ? soundOn : soundOff,
             musicEnabled ? soundOnPressed : soundOffPressed
@@ -144,16 +145,16 @@ public class SettingsMenu {
         musicBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(core.getVolume()); // click sound
+                button_click_sound.play(tidalDefenseGame.getVolume()); // click sound
 
                 // Flip music state: if On then Off, and vice versa.
-                boolean enabled = !core.isMusicEnabled();
-                core.setMusicEnabled(enabled);
+                boolean enabled = !tidalDefenseGame.isMusicEnabled();
+                tidalDefenseGame.setMusicEnabled(enabled);
 
                 // If music is now enabled, start or resume playing it
                 if (enabled) {
                     if (!music.isPlaying()) {
-                        music.setVolume(core.getVolume());
+                        music.setVolume(tidalDefenseGame.getVolume());
                         music.play(); // Resume if it was paused
                     }
 
@@ -177,14 +178,14 @@ public class SettingsMenu {
 
         // Slider ranges from 0.0 (mute) to 1.0 (full volume)
         volumeSlider = new Slider(0f, 1f, 0.05f, false, sliderStyle);
-        volumeSlider.setValue(core.getVolume()); // sync with current volume
+        volumeSlider.setValue(tidalDefenseGame.getVolume()); // sync with current volume
 
         // When the slider moves, update Core volume and music volume.
         volumeSlider.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 float newVolume = volumeSlider.getValue();
-                core.setVolume(newVolume);
+                tidalDefenseGame.setVolume(newVolume);
                 if (music != null) {
                     music.setVolume(newVolume);
                 }

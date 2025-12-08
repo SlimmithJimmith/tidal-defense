@@ -7,7 +7,7 @@
  * Create Date: 09-27-2025
  */
 
-package io.github.SlimmithJimmith.TidalDefense;
+package io.github.SlimmithJimmith.TidalDefense.Enemy;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;

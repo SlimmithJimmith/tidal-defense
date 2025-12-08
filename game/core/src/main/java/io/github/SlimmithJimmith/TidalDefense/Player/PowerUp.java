@@ -8,7 +8,7 @@
  * Create Date: 11-13-2025
  */
 
-package io.github.SlimmithJimmith.TidalDefense;
+package io.github.SlimmithJimmith.TidalDefense.Player;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
