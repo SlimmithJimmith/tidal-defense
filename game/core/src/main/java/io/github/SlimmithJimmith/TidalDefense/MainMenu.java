@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -135,16 +136,18 @@ public class MainMenu {
         Gdx.input.setInputProcessor(menuStage);
 
 
-        BitmapFont font = new BitmapFont();
-        font.getData().setScale(1f); // I have it normal size 1f
-
-        // Font to use and color
+        // Font config
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
         Label.LabelStyle style = new Label.LabelStyle(font, Color.valueOf("065474"));
 
         // Instructions:
         String instructions =
-            "Use \"A\", \"D\" or \"<-\", \"->\" to move left and right.\n" +
-                "Use \"Space\" or \"left-click on the mouse\" to shoot.";
+            "Use 'A' & 'D' or 'Left' & 'Right' arrows to move left and right.\n" +
+                "Use 'Space' or 'left-click' on the mouse to shoot.";
 
         Label helpLabel = new Label(instructions, style);
         helpLabel.setWrap(true); // Allow the text to wrap to the next line automatically

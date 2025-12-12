@@ -33,7 +33,7 @@ public class Lifeguard {
 
     public Lifeguard(Texture img, Texture img_bullet, Color color, Sound sound) {
         lifeguard_sprite = new Sprite(img); // Lifeguard sprite
-        lifeguard_sprite.setSize(100,113); // Adjust to change size of the lifeguard
+        lifeguard_sprite.setSize(100,130); // Adjust to change size of the lifeguard
         float startX = Gdx.graphics.getWidth()/2f - lifeguard_sprite.getWidth()/2f; // Centers lifeguard on x-axis
         float startY = 10f; // Offsets the lifeguard, so it starts slightly above bottom of screen
         position = new Vector2(startX, startY); // Positions the lifeguard
