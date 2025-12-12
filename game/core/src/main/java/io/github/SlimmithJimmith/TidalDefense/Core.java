@@ -18,6 +18,7 @@ import com.badlogic.gdx.audio.*;
 // Graphics
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 
 // Scene2D
 import com.badlogic.gdx.scenes.scene2d.*;
@@ -41,7 +42,7 @@ public class Core extends ApplicationAdapter {
 
     // Enemy setup
     EnemyManager enemyManager;
-    int currentLevel = 1;
+    int currentLevel = 10;
 
     //Scorekeeping
     private int score = 0;
@@ -196,7 +197,12 @@ public class Core extends ApplicationAdapter {
 
         //Create heads up display
         hudStage = new Stage(new ScreenViewport());
-        BitmapFont font = new BitmapFont();
+        // Font config
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
         Label.LabelStyle style = new Label.LabelStyle(font, Color.WHITE);
         scoreLabel = new Label("Score: 0", style);
 

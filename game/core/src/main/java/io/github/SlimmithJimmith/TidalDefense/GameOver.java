@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
@@ -111,14 +112,21 @@ public class GameOver {
         Image titleImg = new Image(new TextureRegionDrawable(new TextureRegion(gameOverTitleTex)));
         titleImg.setScaling(com.badlogic.gdx.utils.Scaling.fit);
 
-        goTable.add(titleImg).padTop(20).padBottom(10).row();
+        goTable.add(titleImg).padTop(100).padLeft(60).padRight(40).row();
 
         // Score form
         com.badlogic.gdx.scenes.scene2d.ui.Table scoreForm = new com.badlogic.gdx.scenes.scene2d.ui.Table();
 
-        Label.LabelStyle lblStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
+
+        // Font config
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
+        Label.LabelStyle lblStyle = new Label.LabelStyle(font, Color.WHITE);
         TextField.TextFieldStyle tfStyle = new TextField.TextFieldStyle();
-        tfStyle.font = new BitmapFont();
+        tfStyle.font = font;
         tfStyle.fontColor = Color.WHITE;
 
         Label nameLabel = new Label("Name:", lblStyle);
@@ -201,8 +209,13 @@ public class GameOver {
     // Leaderboard table (to display latest scores in descending order)
     private Table buildLeaderboardTable() {
         Table t = new Table();
-        BitmapFont f = new BitmapFont();
-        Label.LabelStyle ls = new Label.LabelStyle(f, Color.WHITE);
+        // Font config
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
+        Label.LabelStyle ls = new Label.LabelStyle(font, Color.WHITE);
 
         t.add(new Label("#", ls)).pad(4);
         t.add(new Label("Name", ls)).pad(4);
@@ -237,7 +250,13 @@ public class GameOver {
         t.setFillParent(true);
         t.top().center();
 
-        Label.LabelStyle titleStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
+        // Font config
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Pixel Game.otf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 30;
+        BitmapFont font = generator.generateFont(parameter);
+        generator.dispose();
+        Label.LabelStyle titleStyle = new Label.LabelStyle(font, Color.WHITE);
         t.add(new Label("LEADERBOARD", titleStyle)).padTop(20).padBottom(10).row();
 
         Table lb = buildLeaderboardTable();
