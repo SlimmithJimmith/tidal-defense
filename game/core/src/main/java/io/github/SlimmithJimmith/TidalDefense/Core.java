@@ -42,7 +42,7 @@ public class Core extends ApplicationAdapter {
 
     // Enemy setup
     EnemyManager enemyManager;
-    int currentLevel = 10;
+    int currentLevel = 1;
 
     //Scorekeeping
     private int score = 0;
