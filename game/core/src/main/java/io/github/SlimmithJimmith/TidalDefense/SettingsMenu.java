@@ -101,6 +101,7 @@ public class SettingsMenu {
         soundOff = new TextureRegionDrawable(new TextureRegion(soundOffTex));
         soundOffPressed = new TextureRegionDrawable(new TextureRegion(soundOffPressedTex));
 
+        // Volume Slider
         sliderBgDrawable = new TextureRegionDrawable(new TextureRegion(sliderBgTex));
         sliderKnobDrawable = new TextureRegionDrawable(new TextureRegion(sliderKnobTex));
     }

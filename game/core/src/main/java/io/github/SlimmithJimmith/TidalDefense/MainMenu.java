@@ -5,11 +5,13 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -54,8 +56,8 @@ public class MainMenu {
         this.button_click_sound = button_click_sound;
         this.volume = volume;
         this.playGame = toPlayGame;
-        this.toQuit = toQuit;
         this.toSettingsMenu = toSettingsMenu;
+        this.toQuit = toQuit;
 
         showMainMenu();
     }
@@ -86,15 +88,6 @@ public class MainMenu {
             }
         });
 
-        ImageButton quitButton = makeButton("button/quit-btn-up.png", "button/quit-btn-down.png");
-        quitButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                button_click_sound.play(volume);
-                toQuit.run();     // Closes the application from the menu.
-            }
-        });
-
         ImageButton settingsButton = makeButton("button/settings-btn-up.png", "button/settings-btn-down.png");
         settingsButton.addListener(new ClickListener() {
             @Override
@@ -110,8 +103,14 @@ public class MainMenu {
             }
         });
 
-        // Don't have a listener for this button at this time.
-        ImageButton leaderboardButton = makeButton("button/lead-btn-up.png", "button/lead-btn-down.png");
+        ImageButton quitButton = makeButton("button/quit-btn-up.png", "button/quit-btn-down.png");
+        quitButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                button_click_sound.play(volume);
+                toQuit.run();     // Closes the application from the menu.
+            }
+        });
 
         // Build the table of buttons.
         mainMenuTable = new Table();
@@ -126,15 +125,43 @@ public class MainMenu {
 
         // Add the buttons to the table.
         mainMenuTable.add(playButton).width(300).height(80).row();
-        mainMenuTable.add(quitButton).width(300).height(80).row();
         mainMenuTable.add(settingsButton).width(300).height(80).row();
-        mainMenuTable.add(leaderboardButton).width(300).height(80).row();
+        mainMenuTable.add(quitButton).width(300).height(80).row();
 
         //Add the actor (button) to the stage.
         menuStage.addActor(mainMenuTable);
 
         // Event handler for the input on the stage.
         Gdx.input.setInputProcessor(menuStage);
+
+
+        BitmapFont font = new BitmapFont();
+        font.getData().setScale(1f); // I have it normal size 1f
+
+        // Font to use and color
+        Label.LabelStyle style = new Label.LabelStyle(font, Color.valueOf("065474"));
+
+        // Instructions:
+        String instructions =
+            "Use \"A\", \"D\" or \"<-\", \"->\" to move left and right.\n" +
+                "Use \"Space\" or \"left-click on the mouse\" to shoot.";
+
+        Label helpLabel = new Label(instructions, style);
+        helpLabel.setWrap(true); // Allow the text to wrap to the next line automatically
+
+        Table helpTable = new Table();
+        helpTable.setFillParent(true);
+        helpTable.bottom().left(); // corner anchor (bottom-left)
+
+        // Position the label:
+        helpTable.add(helpLabel)
+            .left()
+            .padLeft(20)
+            .padBottom(15)
+            .width(700);
+
+        menuStage.addActor(helpTable);
+
     }
 
     /*
