@@ -31,12 +31,7 @@ public class GameOver {
     private final Runnable onQuit;
     private final Runnable onReturnToMenu;
 
-    public GameOver(Leaderboard leaderboard,
-                      com.badlogic.gdx.audio.Sound buttonClickSound,
-                      float volume,
-                      Runnable onPlayAgain,
-                      Runnable onQuit,
-                      Runnable onReturnToMenu) {
+    public GameOver(Leaderboard leaderboard, com.badlogic.gdx.audio.Sound buttonClickSound, float volume, Runnable onPlayAgain, Runnable onQuit, Runnable onReturnToMenu) {
 
         this.leaderboard = leaderboard;
         this.buttonClickSound = buttonClickSound;
@@ -139,7 +134,7 @@ public class GameOver {
         scoreForm.add(saveBtn).colspan(2).width(300).height(80).padTop(8).center();
         scoreForm.row();
 
-        // Save score + show leaderboard
+        // Save score and show the leaderboard
         saveBtn.addListener(new com.badlogic.gdx.scenes.scene2d.utils.ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
@@ -203,7 +198,7 @@ public class GameOver {
         stage.addActor(goTable);
     }
 
-    // Leaderboard table (same as before, just moved here)
+    // Leaderboard table (to display latest scores in descending order)
     private Table buildLeaderboardTable() {
         Table t = new Table();
         BitmapFont f = new BitmapFont();
